@@ -1,0 +1,16 @@
+
+{
+  "name": "hris-fastify",
+  "version": "1.0.0",
+  "description": "HRIS Fastify server connected to Supabase",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@fastify/cors": "^8.2.1",
+    "dotenv": "^16.3.1",
+    "fastify": "^4.22.2",
+    "@supabase/supabase-js": "^2.38.4"
+  }
+}
