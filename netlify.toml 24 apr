@@ -1,0 +1,8 @@
+[build]
+  command = "npm install && node server.js"
+  publish = "."
+
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/server"
+  status = 200

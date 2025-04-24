@@ -1,0 +1,160 @@
+openapi: 3.0.0
+info:
+  title: EcoTech HRIS API
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+paths:
+  /:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: Server is running
+
+  /profile/{id}:
+    get:
+      summary: Get employee profile by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Employee profile data
+    patch:
+      summary: Update employee profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated profile data
+
+  /profile/{id}/contract:
+    get:
+      summary: Get employee contract info
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Contract details
+
+  /profile/{id}/leave-balance:
+    get:
+      summary: Get leave balance
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Leave balance
+
+  /leave/apply:
+    post:
+      summary: Apply for leave
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                employee_id:
+                  type: integer
+                leave_type:
+                  type: string
+                start_date:
+                  type: string
+                end_date:
+                  type: string
+      responses:
+        '200':
+          description: Leave application submitted
+
+  /payslips/{employee_id}:
+    get:
+      summary: Get payslips by employee ID
+      parameters:
+        - name: employee_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Payslip list
+
+  /trainings/{employee_id}:
+    get:
+      summary: Get trainings by employee ID
+      parameters:
+        - name: employee_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Training data
+
+  /trainings/{employee_id}/feedback:
+    post:
+      summary: Submit feedback on training
+      parameters:
+        - name: employee_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                training_id:
+                  type: integer
+                feedback:
+                  type: string
+      responses:
+        '200':
+          description: Feedback saved
+
+  /acknowledge:
+    post:
+      summary: Acknowledge company document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                employee_id:
+                  type: integer
+                document_id:
+                  type: integer
+      responses:
+        '200':
+          description: Acknowledgement saved
