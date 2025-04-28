@@ -136,18 +136,6 @@ fastify.post('/remote-request', async (request, reply) => {
   return data;
 });
 
-// GET /remote-checklist/:employee_id
-fastify.get('/remote-checklist/:employee_id', async (request, reply) => {
-  const checklist = {
-    approval: true,
-    internet: true,
-    vpn_access: true,
-    company_device: true,
-    work_schedule_uploaded: true
-  };
-  return checklist;
-});
-
 // 1. GET Performance Review & Development Plan by Employee ID
 fastify.get('/performance-review/:employeeId', async (request, reply) => {
   const employeeId = parseInt(request.params.employeeId);
