@@ -148,18 +148,6 @@ fastify.get('/remote-checklist/:employee_id', async (request, reply) => {
   return checklist;
 });
 
-// GET /workmode/:employee_id
-fastify.get('/workmode/:employee_id', async (request, reply) => {
-  const employee_id = parseInt(request.params.employee_id);
-  const { data, error } = await supabase
-    .from('employees')
-    .select('work_mode')
-    .eq('id', employee_id)
-    .maybeSingle();
-  if (error) return reply.code(500).send(error);
-  return data;
-});
-
 // 1. GET Performance Review & Development Plan by Employee ID
 fastify.get('/performance-review/:employeeId', async (request, reply) => {
   const employeeId = parseInt(request.params.employeeId);
