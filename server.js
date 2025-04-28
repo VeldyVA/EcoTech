@@ -139,6 +139,7 @@ fastify.post('/remote-request', async (request, reply) => {
 // GET /remote-checklist/:employee_id
 fastify.get('/remote-checklist/:employee_id', async (request, reply) => {
   const checklist = {
+    approval: true,
     internet: true,
     vpn_access: true,
     company_device: true,
@@ -155,6 +156,160 @@ fastify.get('/workmode/:employee_id', async (request, reply) => {
     .select('work_mode')
     .eq('id', employee_id)
     .maybeSingle();
+  if (error) return reply.code(500).send(error);
+  return data;
+});
+
+// 1. GET Performance Review & Development Plan by Employee ID
+fastify.get('/performance-review/:employeeId', async (request, reply) => {
+  const employeeId = parseInt(request.params.employeeId);
+  const { data, error } = await supabase
+    .from('performance_review')
+    .select('result, period, year, detail, development_plan')
+    .eq('employee_id', employeeId);
+  if (error) return reply.code(500).send(error);
+  return data;
+});
+
+// 2. GET KPI by Employee ID
+fastify.get('/kpi/:employeeId', async (request, reply) => {
+  const employeeId = parseInt(request.params.employeeId);
+  const { data, error } = await supabase
+    .from('kpi')
+    .select('kpi')
+    .eq('employee_id', employeeId);
+  if (error) return reply.code(500).send(error);
+  return data;
+});
+
+// 3. GET Reward Record by Employee ID
+fastify.get('/reward/:employeeId', async (request, reply) => {
+  const employeeId = parseInt(request.params.employeeId);
+  const { data, error } = await supabase
+    .from('reward')
+    .select('reward')
+    .eq('employee_id', employeeId);
+  if (error) return reply.code(500).send(error);
+  return data;
+});
+
+// 4. GET Disciplinary Record by Employee ID
+fastify.get('/disciplinary/:employeeId', async (request, reply) => {
+  const employeeId = parseInt(request.params.employeeId);
+  const { data, error } = await supabase
+    .from('disciplinary')
+    .select('disciplinary, outcome_letter')
+    .eq('employee_id', employeeId);
+  if (error) return reply.code(500).send(error);
+  return data;
+});
+
+// 5. GET Grievance Record by Employee ID
+fastify.get('/grievance/:employeeId', async (request, reply) => {
+  const employeeId = parseInt(request.params.employeeId);
+  const { data, error } = await supabase
+    .from('grievance')
+    .select('grievance, follow_up, document')
+    .eq('employee_id', employeeId);
+  if (error) return reply.code(500).send(error);
+  return data;
+});
+
+// 6. GET Incident Report by Employee ID
+fastify.get('/incident/:employeeId', async (request, reply) => {
+  const employeeId = parseInt(request.params.employeeId);
+  const { data, error } = await supabase
+    .from('incident')
+    .select('incident, follow_up, document')
+    .eq('employee_id', employeeId);
+  if (error) return reply.code(500).send(error);
+  return data;
+});
+
+// 7. GET Timesheet by Employee ID
+fastify.get('/timesheet/:employeeId', async (request, reply) => {
+  const employeeId = parseInt(request.params.employeeId);
+  const { data, error } = await supabase
+    .from('timesheet')
+    .select('timesheet')
+    .eq('employee_id', employeeId);
+  if (error) return reply.code(500).send(error);
+  return data;
+});
+
+// 8. GET Overtime Record by Employee ID
+fastify.get('/overtime/:employeeId', async (request, reply) => {
+  const employeeId = parseInt(request.params.employeeId);
+  const { data, error } = await supabase
+    .from('overtime')
+    .select('ot_record')
+    .eq('employee_id', employeeId);
+  if (error) return reply.code(500).send(error);
+  return data;
+});
+
+// 9. GET Clearance Record by Employee ID
+fastify.get('/clearance/:employeeId', async (request, reply) => {
+  const employeeId = parseInt(request.params.employeeId);
+  const { data, error } = await supabase
+    .from('clearance')
+    .select('resignation_date, last_day, exit_interview, final_pay, revoke_it_access,collect_returned_assets, insurance_termination, related_document')
+    .eq('employee_id', employeeId);
+  if (error) return reply.code(500).send(error);
+  return data;
+});
+
+// 10. GET Onboarding Record by Employee ID
+fastify.get('/onboarding/:employeeId', async (request, reply) => {
+  const employeeId = parseInt(request.params.employeeId);
+  const { data, error } = await supabase
+    .from('onboarding')
+    .select('pre_day_one, day_one, week_one, first_month, day_30, related_document')
+    .eq('employee_id', employeeId);
+  if (error) return reply.code(500).send(error);
+  return data;
+});
+
+// 11. GET Employee Transfer by Employee ID
+fastify.get('/transfer/:employeeId', async (request, reply) => {
+  const employeeId = parseInt(request.params.employeeId);
+  const { data, error } = await supabase
+    .from('transfer')
+    .select('last_position, last_position_period, new_position, start_date_of_new_position')
+    .eq('employee_id', employeeId);
+  if (error) return reply.code(500).send(error);
+  return data;
+});
+
+// 12. GET Work Mode Status by Employee ID
+fastify.get('/workmode/:employeeId', async (request, reply) => {
+  const employeeId = parseInt(request.params.employeeId);
+  const { data, error } = await supabase
+    .from('work_mode')
+    .select('work_mode')
+    .eq('employee_id', employeeId);
+  if (error) return reply.code(500).send(error);
+  return data;
+});
+
+// 13. GET Remote Request by Employee ID
+fastify.get('/remote-request/:employeeId', async (request, reply) => {
+  const employeeId = parseInt(request.params.employeeId);
+  const { data, error } = await supabase
+    .from('remote_request')
+    .select('work_mode, reason')
+    .eq('employee_id', employeeId);
+  if (error) return reply.code(500).send(error);
+  return data;
+});
+
+// 14. GET Remote Checklist by Employee ID
+fastify.get('/remote-checklist/:employeeId', async (request, reply) => {
+  const employeeId = parseInt(request.params.employeeId);
+  const { data, error } = await supabase
+    .from('remote_checklist')
+    .select('work_mode, approval, internet, vpn_access, company_devices, work_schedule')
+    .eq('employee_id', employeeId);
   if (error) return reply.code(500).send(error);
   return data;
 });
