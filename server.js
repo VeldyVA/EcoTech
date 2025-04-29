@@ -293,29 +293,18 @@ fastify.get('/remote-checklist/:employeeId', async (request, reply) => {
 // === POST Apply to Internal Job ===
 fastify.post('/internal-application', async (request, reply) => {
   const { employee_id, apply_for_position } = request.body;
+  const { data, error } = await supabase
+    .from('recruitment')
+    .insert([
+      {
+        employee_id: employee_id,
+        apply_for_position: apply_for_position,
+        status: 'Pending', // default status saat apply
+      }
+    ]);
 
-  // Validate input
-  if (!employee_id || !apply_for_position) {
-    return reply.code(400).send({ message: 'Employee ID and position are required' });
-  }
-
-  try {
-    const { data, error } = await supabase
-      .from('recruitment')
-      .insert([
-        {
-          employee_id: employee_id,
-          apply_for_position: apply_for_position,
-          status: 'Pending', // default status saat apply
-        }
-      ]);
-
-    if (error) throw error;
-
-    return reply.code(201).send({ message: 'Application submitted successfully', data });
-  } catch (error) {
-    return reply.code(500).send({ message: 'Internal Server Error', error });
-  }
+  if (error) return reply.code(500).send(error);
+  return reply.code(201).send({ message: 'Application submitted successfully', data });
 });
 
 fastify.listen({ port: 3000 }, err => {
