@@ -438,8 +438,8 @@ paths:
             properties:
               employee_id:
                 type: integer
-              job_opening_id:
-                type: integer
+              apply_for_position:
+                type: string
               application_message:
                 type: string
                 nullable: true
