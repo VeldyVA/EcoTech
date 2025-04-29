@@ -35,7 +35,7 @@ fastify.patch('/profile/:id', async (request, reply) => {
     .from('employees')
     .update(updates)
     .eq('id', id)
-    .select()
+    .select('*')
     .maybeSingle();
   if (error) return reply.code(500).send(error);
   return data || { message: 'Employee not found or not updated' };
@@ -78,7 +78,7 @@ fastify.post('/leave/apply', async (request, reply) => {
       status: 'pending',
       requested_at: new Date().toISOString()
     }])
-    .select()
+    .select('*')
     .maybeSingle();
   if (error) return reply.code(500).send(error);
   return data;
