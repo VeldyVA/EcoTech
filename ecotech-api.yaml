@@ -158,3 +158,305 @@ paths:
       responses:
         '200':
           description: Acknowledgement saved
+
+  /performance-review/{employeeId}:
+    get:
+      summary: Get Performance Review by Employee ID
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /kpi/{employeeId}:
+    get:
+      summary: Get KPI by Employee ID
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /reward/{employeeId}:
+    get:
+      summary: Get Reward Record by Employee ID
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /disciplinary/{employeeId}:
+    get:
+      summary: Get Disciplinary Record by Employee ID
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /grievance/{employeeId}:
+    get:
+      summary: Get Grievance Record by Employee ID
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /incident/{employeeId}:
+    get:
+      summary: Get Incident Report by Employee ID
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /timesheet/{employeeId}:
+    get:
+      summary: Get Timesheet by Employee ID
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /overtime/{employeeId}:
+    get:
+      summary: Get Overtime Record by Employee ID
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /clearance/{employeeId}:
+    get:
+      summary: Get Clearance Record by Employee ID
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /onboarding/{employeeId}:
+    get:
+      summary: Get Onboarding Record by Employee ID
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /transfer/{employeeId}:
+    get:
+      summary: Get Employee Transfer by Employee ID
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /workmode/{employeeId}:
+    get:
+      summary: Get Work Mode Status by Employee ID
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /remote-request/{employeeId}:
+    get:
+      summary: Get Remote Request by Employee ID
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /remote-checklist/{employeeId}:
+    get:
+      summary: Get Remote Checklist by Employee ID
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /internal-application/{employeeId}:
+  post:
+    summary: Apply to an Internal Job Opening by Employee ID
+    description: Employee applies for an internal job opening.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              employee_id:
+                type: integer
+              job_opening_id:
+                type: integer
+              application_message:
+                type: string
+                nullable: true
+            required:
+              - employee_id
+              - apply_for_position
+    responses:
+      '201':
+        description: Application submitted successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                data:
+                  type: object
+      '500':
+        description: Server error
