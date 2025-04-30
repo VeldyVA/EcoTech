@@ -3,7 +3,7 @@ info:
   title: HRIS API
   version: "1.0"
 servers:
-  - url: http://localhost:3000
+  - url: https://eco-tech-5m8f.vercel.app/
 paths:
   /:
     get:
