@@ -1,78 +1,66 @@
 openapi: 3.0.0
 info:
-  title: EcoTech HRIS API
-  version: 1.0.0
+  title: HRIS API
+  version: "1.0"
 servers:
-  - url: https://eco-tech-5m8f.vercel.app/
+  - url: http://localhost:3000
 paths:
   /:
     get:
       summary: Health check
       responses:
         '200':
-          description: Server is running
-
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
   /profile/{id}:
     get:
       summary: Get employee profile by ID
       parameters:
-        - name: id
-          in: path
-          required: true
+        - in: path
+          name: id
           schema:
             type: integer
+          required: true
       responses:
         '200':
-          description: Employee profile data
+          description: Employee data or not found message
+          content:
+            application/json:
+              schema:
+                type: object
     patch:
-      summary: Update employee profile
+      summary: Update employee profile by ID
       parameters:
-        - name: id
-          in: path
-          required: true
+        - in: path
+          name: id
           schema:
             type: integer
+          required: true
       requestBody:
+        description: Fields to update in employee record
         required: true
         content:
           application/json:
             schema:
               type: object
-              additionalProperties: true
       responses:
         '200':
-          description: Updated profile data
-
-  /profile/{id}/contract:
-    get:
-      summary: Get employee contract info
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Contract details
-
-  /profile/{id}/leave-balance:
-    get:
-      summary: Get leave balance
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Leave balance
-
+          description: Updated employee data or error message
+          content:
+            application/json:
+              schema:
+                type: object
   /leave/apply:
     post:
       summary: Apply for leave
       requestBody:
+        description: Details of the leave request
         required: true
         content:
           application/json:
@@ -85,66 +73,22 @@ paths:
                   type: string
                 start_date:
                   type: string
+                  format: date
                 end_date:
                   type: string
+                  format: date
       responses:
         '200':
-          description: Leave application submitted
-
-  /payslips/{employee_id}:
-    get:
-      summary: Get payslips by employee ID
-      parameters:
-        - name: employee_id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Payslip list
-
-  /trainings/{employee_id}:
-    get:
-      summary: Get trainings by employee ID
-      parameters:
-        - name: employee_id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Training data
-
-  /trainings/{employee_id}/feedback:
+          description: Leave request data or error message
+          content:
+            application/json:
+              schema:
+                type: object
+  /internal-application:
     post:
-      summary: Submit feedback on training
-      parameters:
-        - name: employee_id
-          in: path
-          required: true
-          schema:
-            type: integer
+      summary: Apply for internal job
       requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                training_id:
-                  type: integer
-                feedback:
-                  type: string
-      responses:
-        '200':
-          description: Feedback saved
-
-  /acknowledge:
-    post:
-      summary: Acknowledge company document
-      requestBody:
+        description: Application details for an internal job
         required: true
         content:
           application/json:
@@ -153,310 +97,17 @@ paths:
               properties:
                 employee_id:
                   type: integer
-                document_id:
-                  type: integer
-      responses:
-        '200':
-          description: Acknowledgement saved
-
-  /performance-review/{employeeId}:
-    get:
-      summary: Get Performance Review by Employee ID
-      parameters:
-        - in: path
-          name: employeeId
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-
-  /kpi/{employeeId}:
-    get:
-      summary: Get KPI by Employee ID
-      parameters:
-        - in: path
-          name: employeeId
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-
-  /reward/{employeeId}:
-    get:
-      summary: Get Reward Record by Employee ID
-      parameters:
-        - in: path
-          name: employeeId
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-
-  /disciplinary/{employeeId}:
-    get:
-      summary: Get Disciplinary Record by Employee ID
-      parameters:
-        - in: path
-          name: employeeId
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-
-  /grievance/{employeeId}:
-    get:
-      summary: Get Grievance Record by Employee ID
-      parameters:
-        - in: path
-          name: employeeId
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-
-  /incident/{employeeId}:
-    get:
-      summary: Get Incident Report by Employee ID
-      parameters:
-        - in: path
-          name: employeeId
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-
-  /timesheet/{employeeId}:
-    get:
-      summary: Get Timesheet by Employee ID
-      parameters:
-        - in: path
-          name: employeeId
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-
-  /overtime/{employeeId}:
-    get:
-      summary: Get Overtime Record by Employee ID
-      parameters:
-        - in: path
-          name: employeeId
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-
-  /clearance/{employeeId}:
-    get:
-      summary: Get Clearance Record by Employee ID
-      parameters:
-        - in: path
-          name: employeeId
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-
-  /onboarding/{employeeId}:
-    get:
-      summary: Get Onboarding Record by Employee ID
-      parameters:
-        - in: path
-          name: employeeId
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-
-  /transfer/{employeeId}:
-    get:
-      summary: Get Employee Transfer by Employee ID
-      parameters:
-        - in: path
-          name: employeeId
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-
-  /workmode/{employeeId}:
-    get:
-      summary: Get Work Mode Status by Employee ID
-      parameters:
-        - in: path
-          name: employeeId
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-
-  /remote-request/{employeeId}:
-    get:
-      summary: Get Remote Request by Employee ID
-      parameters:
-        - in: path
-          name: employeeId
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-
-  /remote-checklist/{employeeId}:
-    get:
-      summary: Get Remote Checklist by Employee ID
-      parameters:
-        - in: path
-          name: employeeId
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-
-  /internal-application/{employeeId}:
-  post:
-    summary: Apply to an Internal Job Opening by Employee ID
-    description: Employee applies for an internal job opening.
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              employee_id:
-                type: integer
-              apply_for_position:
-                type: string
-              application_message:
-                type: string
-                nullable: true
-            required:
-              - employee_id
-              - apply_for_position
-    responses:
-      '201':
-        description: Application submitted successfully
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                message:
+                apply_for_position:
                   type: string
-                data:
-                  type: object
-      '500':
-        description: Server error
+      responses:
+        '201':
+          description: Application submitted successfully along with application data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    type: object
