@@ -36,7 +36,7 @@ fastify.patch('/profile/:id', async (request, reply) => {
     .update(updates)
     .eq('id', id)
     .select('*')
-    .maybeSingle();
+    .single();
   if (error) return reply.code(500).send(error);
   return data || { message: 'Employee not found or not updated' };
 });
@@ -79,7 +79,7 @@ fastify.post('/leave/apply', async (request, reply) => {
       requested_at: new Date().toISOString()
     }])
     .select('*')
-    .maybeSingle();
+    .single();
   if (error) return reply.code(500).send(error);
   return data;
 });
@@ -301,7 +301,9 @@ fastify.post('/internal-application', async (request, reply) => {
         apply_for_position: apply_for_position,
         status: 'Pending', // default status saat apply
       }
-    ]);
+    ])
+    .select('*')
+    .single();
 
   if (error) return reply.code(500).send(error);
   return reply.code(201).send({ message: 'Application submitted successfully', data });
