@@ -1,3 +1,4 @@
+require('dotenv').config();
 const Fastify = require('fastify');
 const cors = require('@fastify/cors');
 const { createClient } = require('@supabase/supabase-js');
@@ -6,8 +7,8 @@ const fastify = Fastify({ logger: true });
 fastify.register(cors);
 
 const supabase = createClient(
-  'https://akikonahxqewrqnwknws.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFraWtvbmFoeHFld3JxbndrbndzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NTI5NzA1MiwiZXhwIjoyMDYwODczMDUyfQ.eKKr_slSZ089zv9v4BAkZSWnmGKD7651bxmNetxJP4g'
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
 );
 
 // Health check
