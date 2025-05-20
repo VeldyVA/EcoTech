@@ -105,33 +105,62 @@ paths:
                   wellbeing_day_balance:
                     type: number
   /leave/apply:
-    post:
-      summary: Apply for leave
-      requestBody:
-        description: Details of the leave request
-        required: true
+  post:
+    summary: Apply for leave (auto approve or reject based on balance)
+    description: >
+      Submit a leave request. The system will automatically approve or reject
+      the request based on the employee's available leave balance.
+      If approved, the leave balance will be reduced.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              employee_id:
+                type: integer
+                example: 13
+              leave_type:
+                type: string
+                description: One of "annual_leave", "personal_leave", or "wellbeing_day"
+                example: annual_leave
+              start_date:
+                type: string
+                format: date
+                example: "2025-06-01"
+              end_date:
+                type: string
+                format: date
+                example: "2025-06-05"
+    responses:
+      '200':
+        description: Leave request processed with status
         content:
           application/json:
             schema:
               type: object
               properties:
-                employee_id:
-                  type: integer
-                leave_type:
+                message:
                   type: string
-                start_date:
-                  type: string
-                  format: date
-                end_date:
-                  type: string
-                  format: date
-      responses:
-        '200':
-          description: Leave request data or error message
-          content:
-            application/json:
-              schema:
-                type: object
+                  example: Leave approved
+                data:
+                  type: object
+                  properties:
+                    employee_id:
+                      type: integer
+                    leave_type:
+                      type: string
+                    start_date:
+                      type: string
+                    end_date:
+                      type: string
+                    status:
+                      type: string
+                      enum: [approved, rejected]
+                    requested_at:
+                      type: string
+                      format: date-time
   /payslips/{employee_id}:
     get:
       summary: Get payslips for an employee
