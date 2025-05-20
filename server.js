@@ -91,13 +91,14 @@ fastify.post('/leave/apply', async (request, reply) => {
   let remainingBalance = 0;
 
   // 3. Tentukan field & sisa saldo berdasarkan leave_type
-  if (leave_type === 'annual_leave') {
+  const normalized = leave_type.toLowerCase().replace(/\s+/g, '_');
+  if (normalized === 'annual_leave') {
     balanceField = 'annual_leave_balance';
     remainingBalance = employee.annual_leave_balance;
-  } else if (leave_type === 'personal_leave') {
+  } else if (normalized === 'personal_leave') {
     balanceField = 'personal_leave_balance';
     remainingBalance = employee.personal_leave_balance;
-  } else if (leave_type === 'wellbeing_day') {
+  } else if (normalized === 'wellbeing_day') {
     balanceField = 'wellbeing_day_balance';
     remainingBalance = employee.wellbeing_day_balance;
   } else {
