@@ -80,7 +80,7 @@ fastify.post('/leave/apply', async (request, reply) => {
     .from('employees')
     .select('annual_leave_balance, personal_leave_balance, wellbeing_day_balance')
     .eq('id', employee_id)
-    .maybeSingle();
+    .single();
 
   if (empError || !employee) {
     return reply.code(404).send({ message: 'Employee not found' });
@@ -120,7 +120,7 @@ fastify.post('/leave/apply', async (request, reply) => {
       requested_at: new Date().toISOString()
     }])
     .select()
-    .maybeSingle();
+    .single();
 
   if (error) return reply.code(500).send(error);
 
