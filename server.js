@@ -122,7 +122,13 @@ fastify.post('/leave/apply', async (request, reply) => {
     .select()
     .single();
 
-  if (error) return reply.code(500).send(error);
+  if (error) {
+  console.error("Supabase insert error", error);
+  request.log.error(error);
+  return reply.code(500).send({ message: "Insert failed", detail: error });
+}
+
+    if (error) return reply.code(500).send(error);
 
   // 6. Jika approved, kurangi saldo cuti
   if (approved) {
