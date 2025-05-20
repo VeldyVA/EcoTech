@@ -66,9 +66,48 @@ fastify.get('/profile/:id/leave-balance', async (request, reply) => {
   return data || { message: 'Leave data not found' };
 });
 
-// POST leave request
+/// POST leave request with auto approval
 fastify.post('/leave/apply', async (request, reply) => {
   const { employee_id, leave_type, start_date, end_date } = request.body;
+
+  // 1. Hitung jumlah hari cuti
+  const start = new Date(start_date);
+  const end = new Date(end_date);
+  const dayCount = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+
+  // 2. Ambil data saldo cuti dari tabel employees
+  const { data: employee, error: empError } = await supabase
+    .from('employees')
+    .select('annual_leave_balance, personal_leave_balance, wellbeing_day_balance')
+    .eq('id', employee_id)
+    .maybeSingle();
+
+  if (empError || !employee) {
+    return reply.code(404).send({ message: 'Employee not found' });
+  }
+
+  let approved = false;
+  let balanceField = '';
+  let remainingBalance = 0;
+
+  // 3. Tentukan field & sisa saldo berdasarkan leave_type
+  if (leave_type === 'annual_leave') {
+    balanceField = 'annual_leave_balance';
+    remainingBalance = employee.annual_leave_balance;
+  } else if (leave_type === 'personal_leave') {
+    balanceField = 'personal_leave_balance';
+    remainingBalance = employee.personal_leave_balance;
+  } else if (leave_type === 'wellbeing_day') {
+    balanceField = 'wellbeing_day_balance';
+    remainingBalance = employee.wellbeing_day_balance;
+  } else {
+    return reply.code(400).send({ message: 'Invalid leave type' });
+  }
+
+  // 4. Cek apakah cukup
+  approved = remainingBalance >= dayCount;
+
+  // 5. Simpan ke tabel leave_requests
   const { data, error } = await supabase
     .from('leave_requests')
     .insert([{
@@ -76,12 +115,23 @@ fastify.post('/leave/apply', async (request, reply) => {
       leave_type,
       start_date,
       end_date,
-      status: 'pending',
+      status: approved ? 'approved' : 'rejected',
       requested_at: new Date().toISOString()
     }])
-    .select('*')
-    .single();
+    .select()
+    .maybeSingle();
+
   if (error) return reply.code(500).send(error);
+
+  // 6. Jika approved, kurangi saldo cuti
+  if (approved) {
+    const updatedBalance = remainingBalance - dayCount;
+    await supabase
+      .from('employees')
+      .update({ [balanceField]: updatedBalance })
+      .eq('id', employee_id);
+  }
+
   return data;
 });
 
