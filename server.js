@@ -67,7 +67,7 @@ fastify.get('/profile/:id/leave-balance', async (request, reply) => {
 });
 
 /// POST leave request with auto approval
-fastify.post('/leave/apply/:employee_id', async (request, reply) => {
+fastify.post('/leave/apply', async (request, reply) => {
   const { employee_id, leave_type, start_date, end_date } = request.body;
 
   // 1. Hitung jumlah hari cuti
