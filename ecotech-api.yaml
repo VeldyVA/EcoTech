@@ -350,10 +350,13 @@ paths:
               properties:
                 employee_id:
                   type: integer
+                  example: 1
                 work_mode:
                   type: string
+                  example: hybrid
                 reason:
                   type: string
+                  example: burnout         
       responses:
         '200':
           description: Remote work request result
@@ -361,6 +364,19 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  employee_id:
+                    type: integer                  
+                  work_mode:
+                    type: string                
+                  reason:
+                    type: string
+                  requested_at:
+                    type: string
+                    format: date-time
+                  status:
+                    type: string
+                    enum: pending  
   /performance-review/{employeeId}:
     get:
       summary: Get performance review and development plan

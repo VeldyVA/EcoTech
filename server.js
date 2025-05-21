@@ -385,7 +385,7 @@ fastify.get('/remote-request/:employeeId', async (request, reply) => {
   const employeeId = parseInt(request.params.employeeId);
   const { data, error } = await supabase
     .from('remote_request')
-    .select('work_mode, reason')
+    .select('work_mode, reason, status')
     .eq('employee_id', employeeId);
   if (error) return reply.code(500).send(error);
   return data;
