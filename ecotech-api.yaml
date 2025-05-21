@@ -43,12 +43,43 @@ paths:
             type: integer
           required: true
       requestBody:
-        description: Fields to update in employee record
         required: true
         content:
           application/json:
             schema:
               type: object
+              properties:
+                full_name:
+                  type: string
+                email:
+                  type: string
+                position:
+                  type: string
+                department:
+                  type: string
+                start_date:
+                  type: string
+                  format: date
+                probation_end:
+                  type: string
+                  format: date
+                contract_type:
+                  type: string
+                annual_leave_balance:
+                  type: integer
+                personal_leave_balance:
+                  type: integer
+                wellbeing_day_balance:
+                  type: integer
+                bank_account:
+                  type: string
+                npwp_number:
+                  type: string
+                status:
+                  type: string
+              example:
+                full_name: "Budi Santoso"
+                bank_account: "1234567890"
       responses:
         '200':
           description: Updated employee data or error message
@@ -104,6 +135,70 @@ paths:
                     type: number
                   wellbeing_day_balance:
                     type: number
+    /profile:
+    post:
+      summary: Add new employee profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                full_name:
+                  type: string
+                email:
+                  type: string
+                position:
+                  type: string
+                department:
+                  type: string
+                start_date:
+                  type: string
+                  format: date
+                probation_end:
+                  type: string
+                  format: date
+                contract_type:
+                  type: string
+                annual_leave_balance:
+                  type: integer
+                personal_leave_balance:
+                  type: integer
+                wellbeing_day_balance:
+                  type: integer
+                bank_account:
+                  type: string
+                npwp_number:
+                  type: string
+                status:
+                  type: string
+              required:
+                - full_name
+                - email
+                - position
+                - department
+                - start_date
+                - probation_end
+                - contract_type
+                - annual_leave_balance
+                - personal_leave_balance
+                - wellbeing_day_balance
+                - bank_account
+                - npwp_number
+                - status
+      responses:
+        '201':
+          description: New employee created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  employee:
+                    type: object
   /leave/apply:
   post:
     summary: Apply for leave (auto approve or reject based on balance)
