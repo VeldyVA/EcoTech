@@ -66,6 +66,60 @@ fastify.get('/profile/:id/leave-balance', async (request, reply) => {
   return data || { message: 'Leave data not found' };
 });
 
+// POST new employee
+fastify.post('/profile', async (request, reply) => {
+  const newEmployee = request.body;
+
+  // Ambil employee_id terbesar (terakhir)
+  const { data: lastEmployee, error: lastError } = await supabase
+    .from('employees')
+    .select('employee_id')
+    .order('employee_id', { ascending: false })
+    .limit(1)
+    .single();
+
+  // Kalau ada error selain tabel kosong
+  if (lastError && lastError.code !== 'PGRST116') {
+    return reply.code(500).send({ error: 'Gagal mengambil employee_id terakhir', detail: lastError });
+  }
+
+  // Tentukan employee_id berikutnya
+  const nextEmployeeId = lastEmployee?.employee_id ? lastEmployee.employee_id + 1 : 1;
+
+  const toInsert = {
+    employee_id: nextEmployeeId,
+    full_name: newEmployee.full_name,
+    email: newEmployee.email,
+    position: newEmployee.position,
+    department: newEmployee.department,
+    start_date: newEmployee.start_date,
+    probation_end: newEmployee.probation_end,
+    contract_type: newEmployee.contract_type,
+    annual_leave_balance: newEmployee.annual_leave_balance,
+    personal_leave_balance: newEmployee.personal_leave_balance,
+    wellbeing_day_balance: newEmployee.wellbeing_day_balance,
+    bank_account: newEmployee.bank_account,
+    npwp_number: newEmployee.npwp_number,
+    status: newEmployee.status
+  };
+
+  // Simpan data ke Supabase
+  const { data, error } = await supabase
+    .from('employees')
+    .insert(toInsert)
+    .select()
+    .single();
+
+  if (error) {
+    return reply.code(500).send({ error: 'Gagal menyimpan data karyawan', detail: error });
+  }
+
+  return reply.code(201).send({
+    message: 'Employee added successfully',
+    employee: data
+  });
+});
+
 /// POST leave request with auto approval
 fastify.post('/leave/apply', async (request, reply) => {
   const { employee_id, leave_type, start_date, end_date } = request.body;
@@ -92,13 +146,13 @@ fastify.post('/leave/apply', async (request, reply) => {
 
   // 3. Tentukan field & sisa saldo berdasarkan leave_type
   const normalized = leave_type.toLowerCase().replace(/\s+/g, '_');
-  if (normalized === 'annual_leave') {
+  if (normalized.includes('annual')) {
     balanceField = 'annual_leave_balance';
     remainingBalance = employee.annual_leave_balance;
-  } else if (normalized === 'personal_leave') {
+  } else if (normalized.includes('personal')) {
     balanceField = 'personal_leave_balance';
     remainingBalance = employee.personal_leave_balance;
-  } else if (normalized === 'wellbeing_day') {
+  } else if (normalized.includes('wellbeing')) {
     balanceField = 'wellbeing_day_balance';
     remainingBalance = employee.wellbeing_day_balance;
   } else {
