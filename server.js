@@ -237,59 +237,27 @@ fastify.post('/trainings/:employee_id/feedback', async (request, reply) => {
 });
 
 // POST /remote-request
-fastify.post('/remote-request', {
-  schema: {
-    summary: 'Create a remote work request',
-    tags: ['Remote Request'],
-    body: {
-      type: 'object',
-      required: ['employee_id', 'work_mode', 'reason'],
-      properties: {
-        employee_id: { type: 'integer', description: 'ID of the employee (must exist in employees table)' },
-        work_mode: { type: 'string', enum: ['remote', 'hybrid'], description: 'Type of work mode requested' },
-        reason: { type: 'string', description: 'Reason for remote work request' }
-      }
-    },
-    response: {
-      201: {
-        description: 'Request created successfully',
-        type: 'object',
-        properties: {
-          id: { type: 'integer' },
-          employee_id: { type: 'integer' },
-          work_mode: { type: 'string' },
-          reason: { type: 'string' },
-          requested_at: { type: 'string', format: 'date-time' },
-          status: { type: 'string' }
-        }
-      },
-      500: {
-        description: 'Server error',
-        type: 'object',
-        properties: {
-          error: { type: 'string' }
-        }
-      }
-    }
-  }
-}, async (request, reply) => {
+fastify.post('/remote-request', async (request, reply) => {
   const { employee_id, work_mode, reason } = request.body;
+
+  const payload = {
+    employee_id,
+    work_mode,
+    reason,
+    requested_at: new Date().toISOString(),
+    status: 'pending'
+  };
+
+  console.log('Payload:', payload);
 
   const { data, error } = await supabase
     .from('remote_requests')
-    .insert([{
-      employee_id,
-      work_mode,
-      reason,
-      requested_at: new Date().toISOString(),
-      status: 'pending'
-    }])
-    
-  if (error) {
-    return reply.code(500).send({ error: error.message });
-  }
+    .insert([payload]);
 
-  return reply.code(201).send({ message: 'Insert success' });
+  console.log('Insert response:', { data, error });
+
+  if (error) return reply.code(500).send({ error: error.message });
+  return reply.code(201).send({ message: 'Request submitted', payload });
 });
 
 // 1. GET Performance Review & Development Plan by Employee ID
