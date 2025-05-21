@@ -284,14 +284,12 @@ fastify.post('/remote-request', {
       requested_at: new Date().toISOString(),
       status: 'pending'
     }])
-    .select()
-    .maybeSingle();
-
+    
   if (error) {
     return reply.code(500).send({ error: error.message });
   }
 
-  return reply.code(201).send(data);
+  return reply.code(201).send({ message: 'Insert success' });
 });
 
 // 1. GET Performance Review & Development Plan by Employee ID
