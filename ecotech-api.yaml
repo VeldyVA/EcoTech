@@ -135,7 +135,7 @@ paths:
                     type: number
                   wellbeing_day_balance:
                     type: number
-    /profile:
+  /profile:
     post:
       summary: Add new employee profile
       requestBody:
@@ -200,62 +200,58 @@ paths:
                   employee:
                     type: object
   /leave/apply:
-  post:
-    summary: Apply for leave (auto approve or reject based on balance)
-    description: >
-      Submit a leave request. The system will automatically approve or reject
-      the request based on the employee's available leave balance.
-      If approved, the leave balance will be reduced.
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              employee_id:
-                type: integer
-                example: 13
-              leave_type:
-                type: string
-                description: One of "annual_leave", "personal_leave", or "wellbeing_day"
-                example: annual_leave
-              start_date:
-                type: string
-                format: date
-                example: "2025-06-01"
-              end_date:
-                type: string
-                format: date
-                example: "2025-06-05"
-    responses:
-      '200':
-        description: Leave request processed with status
+    post:
+      summary: Apply for leave (auto approve or reject based on balance
+      requestBody:
+        required: true
         content:
           application/json:
             schema:
               type: object
               properties:
-                message:
+                employee_id:
+                  type: integer
+                  example: 13
+                leave_type:
                   type: string
-                  example: Leave approved
-                data:
-                  type: object
-                  properties:
-                    employee_id:
-                      type: integer
-                    leave_type:
-                      type: string
-                    start_date:
-                      type: string
-                    end_date:
-                      type: string
-                    status:
-                      type: string
-                      enum: [approved, rejected]
-                    requested_at:
-                      type: string
-                      format: date-time
+                  description: One of "annual_leave", "personal_leave", or "wellbeing_day"
+                  example: annual_leave
+                start_date:
+                  type: string
+                  format: date
+                  example: "2025-06-01"
+                end_date:
+                  type: string
+                  format: date
+                  example: "2025-06-05"
+      responses:
+        '200':
+          description: Leave request processed with status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Leave approved
+                  data:
+                    type: object
+                properties:
+                  employee_id:
+                    type: integer
+                  leave_type:
+                    type: string
+                  start_date:
+                    type: string
+                  end_date:
+                    type: string
+                  status:
+                    type: string
+                    enum: [approved, rejected]
+                  requested_at:
+                    type: string
+                    format: date-time
   /payslips/{employee_id}:
     get:
       summary: Get payslips for an employee
