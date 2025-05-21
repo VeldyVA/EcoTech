@@ -70,11 +70,11 @@ fastify.get('/profile/:id/leave-balance', async (request, reply) => {
 fastify.post('/profile', async (request, reply) => {
   const newEmployee = request.body;
 
-  // Ambil employee_id terbesar (terakhir)
+  // Ambil id terbesar (terakhir)
   const { data: lastEmployee, error: lastError } = await supabase
     .from('employees')
-    .select('employee_id')
-    .order('employee_id', { ascending: false })
+    .select('id')
+    .order('id', { ascending: false })
     .limit(1)
     .single();
 
@@ -83,11 +83,11 @@ fastify.post('/profile', async (request, reply) => {
     return reply.code(500).send({ error: 'Gagal mengambil employee_id terakhir', detail: lastError });
   }
 
-  // Tentukan employee_id berikutnya
-  const nextEmployeeId = lastEmployee?.employee_id ? lastEmployee.employee_id + 1 : 1;
+  // Tentukan id berikutnya
+  const nextId = lastEmployee?.id ? lastEmployee.id + 1 : 1;
 
   const toInsert = {
-    employee_id: nextEmployeeId,
+    id: nextId,
     full_name: newEmployee.full_name,
     email: newEmployee.email,
     position: newEmployee.position,
