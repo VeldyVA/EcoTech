@@ -339,36 +339,44 @@ paths:
                 type: object
   /remote-request:
     post:
-      summary: Submit a remote work request
+      summary: Create a remote work request
+      tags:
+        - Remote Request
       requestBody:
-        description: Details for the remote work request
         required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - employee_id
+                - work_mode
+                - reason
               properties:
                 employee_id:
                   type: integer
-                  example: 1
+                  description: ID of the employee (must exist in employees table)
                 work_mode:
                   type: string
-                  example: hybrid
+                  enum: [remote, hybrid]
+                  description: Type of work mode requested
                 reason:
                   type: string
-                  example: burnout         
+                  description: Reason for remote work request
       responses:
-        '200':
-          description: Remote work request result
+        '201':
+          description: Request created successfully
           content:
             application/json:
               schema:
                 type: object
                 properties:
+                  id:
+                    type: integer
                   employee_id:
-                    type: integer                  
+                    type: integer
                   work_mode:
-                    type: string                
+                    type: string
                   reason:
                     type: string
                   requested_at:
@@ -376,7 +384,15 @@ paths:
                     format: date-time
                   status:
                     type: string
-                    enum: pending  
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
   /performance-review/{employeeId}:
     get:
       summary: Get performance review and development plan
