@@ -251,13 +251,17 @@ fastify.post('/remote-request', async (request, reply) => {
   console.log('Payload:', payload);
 
   const { data, error } = await supabase
-    .from('remote_requests')
+    .from('remote_request')
     .insert([payload]);
 
   console.log('Insert response:', { data, error });
 
-  if (error) return reply.code(500).send({ error: error.message });
-  return reply.code(201).send({ message: 'Request submitted', payload });
+  if (error) {
+    fastify.log.error('Insert failed:', error);
+    return reply.code(500).send({ message: 'Insert to Supabase failed', details: error.message || error });
+  }
+
+  return reply.code(201).send({ message: 'Request submitted', data, payload });
 });
 
 // 1. GET Performance Review & Development Plan by Employee ID
