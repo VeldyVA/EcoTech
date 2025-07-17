@@ -252,6 +252,10 @@ paths:
                   requested_at:
                     type: string
                     format: date-time
+                  days_deducted:               
+                    type: integer
+                    description: Number of leave days deducted (excluding weekends/public holidays)
+                    example: 6
   /payslips/{employee_id}:
     get:
       summary: Get payslips for an employee
