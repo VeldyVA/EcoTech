@@ -127,7 +127,16 @@ fastify.post('/leave/apply', async (request, reply) => {
   // 1. Hitung jumlah hari cuti
   const start = new Date(start_date);
   const end = new Date(end_date);
-  const dayCount = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+
+  let workDayCount = 0;
+  const current = new Date(start);
+  while (current <= end) {
+  const day = current.getDay(); // 0 = Minggu, 6 = Sabtu
+  if (day !== 0 && day !== 6) {
+    workDayCount++;
+  }
+  current.setDate(current.getDate() + 1);
+}
 
   // 2. Ambil data saldo cuti dari tabel employees
   const { data: employee, error: empError } = await supabase
@@ -160,7 +169,7 @@ fastify.post('/leave/apply', async (request, reply) => {
   }
 
   // 4. Cek apakah cukup
-  approved = remainingBalance >= dayCount;
+  approved = remainingBalance >= workDayCount;
 
   // 5. Simpan ke tabel leave_requests
   const { data, error } = await supabase
@@ -186,7 +195,7 @@ fastify.post('/leave/apply', async (request, reply) => {
 
   // 6. Jika approved, kurangi saldo cuti
   if (approved) {
-    const updatedBalance = remainingBalance - dayCount;
+    const updatedBalance = remainingBalance - workDayCount;
     await supabase
       .from('employees')
       .update({ [balanceField]: updatedBalance })
