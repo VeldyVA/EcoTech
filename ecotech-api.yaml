@@ -199,9 +199,10 @@ paths:
                     type: string
                   employee:
                     type: object
-  /leave/apply:
+  
+    /leave-preview:
     post:
-      summary: Apply for leave (auto approve or reject based on balance
+      summary: Preview leave request and check balance
       requestBody:
         required: true
         content:
@@ -215,18 +216,78 @@ paths:
                 leave_type:
                   type: string
                   description: One of "annual_leave", "personal_leave", or "wellbeing_day"
-                  example: annual_leave
+                  example: "annual_leave"
                 start_date:
                   type: string
-                  format: date
-                  example: "2025-06-01"
-                end_date:
-                  type: string
-                  format: date
-                  example: "2025-06-05"
+                  description: Leave start date in DD-MM-YYYY format
+                  example: "01-08-2025"
+                days:
+                  type: integer
+                  description: Number of working days requested
+                  example: 5
       responses:
         '200':
-          description: Leave request processed with status
+          description: Leave preview result including computed end date and balance check
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  start_date:
+                    type: string
+                    example: "01-08-2025"
+                  end_date:
+                    type: string
+                    example: "07-08-2025"
+                  days:
+                    type: integer
+                    example: 5
+                  remaining_balance:
+                    type: integer
+                    example: 7
+                  sufficient:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Saldo mencukupi. Cuti dari 01-08-2025 sampai 07-08-2025
+        '400':
+          description: Invalid leave type
+        '404':
+          description: Employee not found
+  
+    /leave/apply:
+    post:
+      summary: Apply for leave
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                employee_id:
+                  type: integer
+                  example: 13
+                leave_type:
+                  type: string
+                  description: One of "annual_leave", "personal_leave", or "wellbeing_day"
+                  example: "annual_leave"
+                start_date:
+                  type: string
+                  description: Leave start date in DD-MM-YYYY format
+                  example: "01-08-2025"
+                end_date:
+                  type: string
+                  description: Leave end date in DD-MM-YYYY format
+                  example: "07-08-2025"
+                days:
+                  type: integer
+                  description: Number of working days for leave
+                  example: 5
+      responses:
+        '200':
+          description: Leave applied successfully
           content:
             application/json:
               schema:
@@ -234,28 +295,12 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: Leave approved
-                  data:
-                    type: object
-                properties:
-                  employee_id:
-                    type: integer
-                  leave_type:
-                    type: string
-                  start_date:
-                    type: string
-                  end_date:
-                    type: string
-                  status:
-                    type: string
-                    enum: [approved, rejected]
-                  requested_at:
-                    type: string
-                    format: date-time
-                  days_deducted:               
-                    type: integer
-                    description: Number of leave days deducted (excluding weekends/public holidays)
-                    example: 6
+                    example: Leave applied successfully
+        '400':
+          description: Invalid request or insufficient balance
+        '404':
+          description: Employee not found
+   
   /payslips/{employee_id}:
     get:
       summary: Get payslips for an employee
