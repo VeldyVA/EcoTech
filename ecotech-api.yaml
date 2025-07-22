@@ -200,7 +200,7 @@ paths:
                   employee:
                     type: object
   
-    /leave-preview:
+  /leave-preview:
     post:
       summary: Preview leave request and check balance
       requestBody:
@@ -256,7 +256,7 @@ paths:
         '404':
           description: Employee not found
   
-    /leave/apply:
+  /leave/apply:
     post:
       summary: Apply for leave
       requestBody:
