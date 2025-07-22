@@ -124,14 +124,12 @@ fastify.post('/profile', async (request, reply) => {
 fastify.post('/leave-preview', async (request, reply) => {
   const { employee_id, leave_type, start_date, days } = request.body;
 
-  // Konversi DD-MM-YYYY ke Date
-  const [day, month, year] = start_date.split('-');
-  const start = new Date(`${year}-${month}-${day}`);
+  // Konversi start_date ke objek Date
+  const start = new Date(start_date); // Asumsikan format sudah 'YYYY-MM-DD'
+  const current = new Date(start);
 
   // Hitung end_date berdasarkan hari kerja
   let workDays = 0;
-  const current = new Date(start);
-
   while (workDays < days) {
     const d = current.getDay(); // 0: Minggu, 6: Sabtu
     if (d !== 0 && d !== 6) workDays++;
@@ -186,10 +184,7 @@ fastify.post('/leave-preview', async (request, reply) => {
 // POST leave request with auto approval
 fastify.post('/leave/apply', async (request, reply) => {
   const { employee_id, leave_type, start_date, days } = request.body;
-
-  // Konversi tanggal dari DD-MM-YYYY
-  const [day, month, year] = start_date.split('-');
-  const start = new Date(`${year}-${month}-${day}`);
+  const start = new Date(start_date); // langsung, karena sudah YYYY-MM-DD
 
   // Hitung end_date berdasarkan hari kerja
   let workDays = 0;
@@ -203,7 +198,7 @@ fastify.post('/leave/apply', async (request, reply) => {
 
   const end = new Date(current);
   const pad = (n) => (n < 10 ? '0' + n : n);
-  const end_date = `${pad(end.getDate())}-${pad(end.getMonth() + 1)}-${end.getFullYear()}`;
+  const end_date = `${end.getFullYear()}-${pad(end.getMonth() + 1)}-${pad(end.getDate())}`;
 
   // Ambil saldo cuti
   const { data: employee, error: empError } = await supabase
@@ -245,9 +240,9 @@ fastify.post('/leave/apply', async (request, reply) => {
       leave_type,
       start_date,
       end_date,
-      days,
       status: 'pending',
-      requested_at: new Date().toISOString()
+      requested_at: new Date().toISOString(),
+      days
     }
   ]);
 
