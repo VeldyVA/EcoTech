@@ -219,8 +219,8 @@ paths:
                   example: "annual_leave"
                 start_date:
                   type: date
-                  description: Leave start date in DD-MM-YYYY format
-                  example: "01-08-2025"
+                  description: Leave start date in YYYY-MM-DD format
+                  example: "2025-08-01"
                 days:
                   type: integer
                   description: Number of working days requested
@@ -235,10 +235,10 @@ paths:
                 properties:
                   start_date:
                     type: date
-                    example: "01-08-2025"
+                    example: "2025-08-01"
                   end_date:
                     type: date
-                    example: "07-08-2025"
+                    example: "2025-08-07"
                   days:
                     type: integer
                     example: 5
@@ -250,7 +250,7 @@ paths:
                     example: true
                   message:
                     type: string
-                    example: Saldo mencukupi. Cuti dari 01-08-2025 sampai 07-08-2025
+                    example: Saldo mencukupi. Cuti dari 2025-08-01 sampai 2025-08-07
         '400':
           description: Invalid leave type
         '404':
@@ -275,12 +275,12 @@ paths:
                   example: "annual_leave"
                 start_date:
                   type: date
-                  description: Leave start date in DD-MM-YYYY format
-                  example: "01-08-2025"
+                  description: Leave start date in YYYY-MM-DD format
+                  example: "2025-08-01"
                 end_date:
                   type: date
-                  description: Leave end date in DD-MM-YYYY format
-                  example: "07-08-2025"
+                  description: Leave end date in YYYY-MM-DD format
+                  example: "2025-08-07"
                 days:
                   type: integer
                   description: Number of working days for leave
