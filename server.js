@@ -184,7 +184,7 @@ fastify.post('/leave-preview', async (request, reply) => {
 });
 
 // POST leave request with auto approval
-fastify.post('/leave-request', async (request, reply) => {
+fastify.post('/leave/apply', async (request, reply) => {
   const { employee_id, leave_type, start_date, days, reason } = request.body;
 
   // Konversi tanggal dari DD-MM-YYYY
