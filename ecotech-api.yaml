@@ -218,7 +218,7 @@ paths:
                   description: One of "annual_leave", "personal_leave", or "wellbeing_day"
                   example: "annual_leave"
                 start_date:
-                  type: string
+                  type: date
                   description: Leave start date in DD-MM-YYYY format
                   example: "01-08-2025"
                 days:
@@ -234,10 +234,10 @@ paths:
                 type: object
                 properties:
                   start_date:
-                    type: string
+                    type: date
                     example: "01-08-2025"
                   end_date:
-                    type: string
+                    type: date
                     example: "07-08-2025"
                   days:
                     type: integer
@@ -274,11 +274,11 @@ paths:
                   description: One of "annual_leave", "personal_leave", or "wellbeing_day"
                   example: "annual_leave"
                 start_date:
-                  type: string
+                  type: date
                   description: Leave start date in DD-MM-YYYY format
                   example: "01-08-2025"
                 end_date:
-                  type: string
+                  type: date
                   description: Leave end date in DD-MM-YYYY format
                   example: "07-08-2025"
                 days:
