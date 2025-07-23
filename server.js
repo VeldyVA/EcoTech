@@ -128,6 +128,18 @@ fastify.post('/leave-preview', async (request, reply) => {
   const start = new Date(start_date); // Asumsikan format sudah 'YYYY-MM-DD'
   const current = new Date(start);
 
+  // ❗ Validasi cuti tidak bisa backdate
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const startClone = new Date(start);
+  startClone.setHours(0, 0, 0, 0);
+
+  if (startClone < today) {
+    return reply.code(400).send({
+      message: 'Tanggal cuti tidak boleh di masa lalu'
+    });
+  }
+
   // Hitung end_date berdasarkan hari kerja
   let workDays = 0;
   while (workDays < days) {
@@ -186,6 +198,18 @@ fastify.post('/leave/apply', async (request, reply) => {
   const { employee_id, leave_type, start_date, days } = request.body;
   const start = new Date(start_date); // langsung, karena sudah YYYY-MM-DD
 
+  // ❗ Validasi cuti tidak bisa backdate
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const startClone = new Date(start);
+  startClone.setHours(0, 0, 0, 0);
+
+  if (startClone < today) {
+    return reply.code(400).send({
+      message: 'Tanggal cuti tidak boleh di masa lalu'
+    });
+  }
+  
   // Hitung end_date berdasarkan hari kerja
   let workDays = 0;
   const current = new Date(start);
@@ -266,6 +290,80 @@ fastify.post('/leave/apply', async (request, reply) => {
     end_date,
     days,
     remaining_balance: currentBalance - days
+  });
+});
+
+// DELETE leave cancel
+fastify.post('/leave/cancel', async (request, reply) => {
+  const { employee_id, start_date } = request.body;
+
+  const { data: leave, error: leaveError } = await supabase
+    .from('leave_requests')
+    .select('id, leave_type, days, status')
+    .eq('employee_id', employee_id)
+    .eq('start_date', start_date)
+    .single();
+
+  if (leaveError || !leave) {
+    return reply.code(404).send({ message: 'Leave request not found.' });
+  }
+
+  if (leave.status !== 'pending') {
+    return reply.code(400).send({ message: 'Only pending leave requests can be canceled.' });
+  }
+
+  // Get current leave balance
+  const { data: employee, error: empError } = await supabase
+    .from('employees')
+    .select('annual_leave_balance, personal_leave_balance, wellbeing_day_balance')
+    .eq('id', employee_id)
+    .single();
+
+  if (empError || !employee) {
+    return reply.code(404).send({ message: 'Employee not found.' });
+  }
+
+  const type = leave.leave_type.toLowerCase().replace(/\s+/g, '_');
+  let balanceField = '';
+  let updatedBalance = 0;
+
+  if (type.includes('annual')) {
+    balanceField = 'annual_leave_balance';
+    updatedBalance = employee.annual_leave_balance + leave.days;
+  } else if (type.includes('personal')) {
+    balanceField = 'personal_leave_balance';
+    updatedBalance = employee.personal_leave_balance + leave.days;
+  } else if (type.includes('wellbeing')) {
+    balanceField = 'wellbeing_day_balance';
+    updatedBalance = employee.wellbeing_day_balance + leave.days;
+  } else {
+    return reply.code(400).send({ message: 'Invalid leave type.' });
+  }
+
+  // Delete the leave request
+  const { error: deleteError } = await supabase
+    .from('leave_requests')
+    .delete()
+    .eq('id', leave.id);
+
+  if (deleteError) {
+    return reply.code(500).send({ message: 'Failed to cancel the leave request.', detail: deleteError.message });
+  }
+
+  // Restore balance
+  const { error: updateError } = await supabase
+    .from('employees')
+    .update({ [balanceField]: updatedBalance })
+    .eq('id', employee_id);
+
+  if (updateError) {
+    return reply.code(500).send({ message: 'Failed to restore leave balance.', detail: updateError.message });
+  }
+
+  return reply.send({
+    message: 'Leave request has been successfully canceled and balance restored.',
+    returned_days: leave.days,
+    new_balance: updatedBalance,
   });
 });
 

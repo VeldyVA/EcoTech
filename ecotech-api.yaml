@@ -252,7 +252,15 @@ paths:
                     type: string
                     example: Saldo mencukupi. Cuti dari 2025-08-01 sampai 2025-08-07
         '400':
-          description: Invalid leave type
+          description: Invalid leave type or failed due to past leave date
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: The leave date cannot be in the past
         '404':
           description: Employee not found
   
@@ -297,10 +305,92 @@ paths:
                     type: string
                     example: Leave applied successfully
         '400':
-          description: Invalid request or insufficient balance
+          description: Invalid request or insufficient balance or failed due to past leave date
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: The leave date cannot be in the past
         '404':
           description: Employee not found
-   
+
+  /leave/cancel:
+  post:
+    summary: Cancel a leave request
+    description: Cancels a pending leave request by employee ID and start date, and restores the leave balance.
+    tags:
+      - Leave
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - employee_id
+              - start_date
+            properties:
+              employee_id:
+                type: integer
+                example: 13
+              start_date:
+                type: string
+                format: date
+                example: 2024-08-01
+    responses:
+      '200':
+        description: Leave request successfully canceled and balance restored
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: Leave request has been successfully canceled and balance restored.
+                returned_days:
+                  type: integer
+                  example: 1
+                new_balance:
+                  type: integer
+                  example: 3
+      '400':
+        description: Only pending leave requests can be canceled or invalid type
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: Only pending leave requests can be canceled.
+      '404':
+        description: Leave request or employee not found
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: Leave request not found.
+      '500':
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: Failed to restore leave balance.
+                detail:
+                  type: string
+                  example: Unexpected database error.
+
   /payslips/{employee_id}:
     get:
       summary: Get payslips for an employee
