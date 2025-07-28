@@ -128,6 +128,13 @@ fastify.post('/leave-preview', async (request, reply) => {
   const start = new Date(start_date); // Asumsikan format sudah 'YYYY-MM-DD'
   const current = new Date(start);
 
+  const dayOfWeek = start.getDay();
+  if (dayOfWeek === 0 || dayOfWeek === 6) {
+    return reply.code(400).send({
+      message: 'Leave start date cannot fall on a Saturday or Sunday'
+    });
+  }
+
   // ❗ Validasi cuti tidak bisa backdate
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -197,6 +204,12 @@ fastify.post('/leave-preview', async (request, reply) => {
 fastify.post('/leave/apply', async (request, reply) => {
   const { employee_id, leave_type, start_date, days } = request.body;
   const start = new Date(start_date); // langsung, karena sudah YYYY-MM-DD
+  const dayOfWeek = start.getDay();
+  if (dayOfWeek === 0 || dayOfWeek === 6) {
+    return reply.code(400).send({
+      message: 'Leave start date cannot fall on a Saturday or Sunday'
+    });
+  }
 
   // ❗ Validasi cuti tidak bisa backdate
   const today = new Date();
