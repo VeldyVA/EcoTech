@@ -1,0 +1,903 @@
+openapi: 3.0.0
+info:
+  title: HRIS API
+  version: "1.0"
+servers:
+  - url: https://eco-tech-5m8f.vercel.app/
+paths:
+  /:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK - returns server status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /profile/{id}:
+    get:
+      summary: Get employee profile by ID
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Employee data or not found message
+          content:
+            application/json:
+              schema:
+                type: object
+    patch:
+      summary: Update employee profile by ID
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                full_name:
+                  type: string
+                email:
+                  type: string
+                position:
+                  type: string
+                department:
+                  type: string
+                start_date:
+                  type: string
+                  format: date
+                probation_end:
+                  type: string
+                  format: date
+                contract_type:
+                  type: string
+                annual_leave_balance:
+                  type: integer
+                personal_leave_balance:
+                  type: integer
+                wellbeing_day_balance:
+                  type: integer
+                bank_account:
+                  type: string
+                npwp_number:
+                  type: string
+                status:
+                  type: string
+              example:
+                full_name: "Budi Santoso"
+                bank_account: "1234567890"
+      responses:
+        '200':
+          description: Updated employee data or error message
+          content:
+            application/json:
+              schema:
+                type: object
+  /profile/{id}/contract:
+    get:
+      summary: Get employee contract status
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Contract details or error message
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contract_type:
+                    type: string
+                  start_date:
+                    type: string
+                  probation_end:
+                    type: string
+                  status:
+                    type: string
+  /profile/{id}/leave-balance:
+    get:
+      summary: Get employee leave balance
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Leave balance details or error message
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  annual_leave_balance:
+                    type: number
+                  personal_leave_balance:
+                    type: number
+                  wellbeing_day_balance:
+                    type: number
+  /profile:
+    post:
+      summary: Add new employee profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                full_name:
+                  type: string
+                email:
+                  type: string
+                position:
+                  type: string
+                department:
+                  type: string
+                start_date:
+                  type: string
+                  format: date
+                probation_end:
+                  type: string
+                  format: date
+                contract_type:
+                  type: string
+                annual_leave_balance:
+                  type: integer
+                personal_leave_balance:
+                  type: integer
+                wellbeing_day_balance:
+                  type: integer
+                bank_account:
+                  type: string
+                npwp_number:
+                  type: string
+                status:
+                  type: string
+              required:
+                - full_name
+                - email
+                - position
+                - department
+                - start_date
+                - probation_end
+                - contract_type
+                - annual_leave_balance
+                - personal_leave_balance
+                - wellbeing_day_balance
+                - bank_account
+                - npwp_number
+                - status
+      responses:
+        '201':
+          description: New employee created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  employee:
+                    type: object
+  
+  /leave-preview:
+    post:
+      summary: Preview leave request and check balance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                employee_id:
+                  type: integer
+                  example: 13
+                leave_type:
+                  type: string
+                  description: One of "annual_leave", "personal_leave", or "wellbeing_day"
+                  example: "annual_leave"
+                start_date:
+                  type: date
+                  description: Leave start date in YYYY-MM-DD format
+                  example: "2025-08-01"
+                days:
+                  type: integer
+                  description: Number of working days requested
+                  example: 5
+      responses:
+        '200':
+          description: Leave preview result including computed end date and balance check
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  start_date:
+                    type: date
+                    example: "2025-08-01"
+                  end_date:
+                    type: date
+                    example: "2025-08-07"
+                  days:
+                    type: integer
+                    example: 5
+                  remaining_balance:
+                    type: integer
+                    example: 7
+                  sufficient:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Saldo mencukupi. Cuti dari 2025-08-01 sampai 2025-08-07
+        '400':
+          description: Invalid leave type or failed due to past leave date
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: The leave date cannot be in the past
+        '404':
+          description: Employee not found
+  
+  /leave/apply:
+    post:
+      summary: Apply for leave
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                employee_id:
+                  type: integer
+                  example: 13
+                leave_type:
+                  type: string
+                  description: One of "annual_leave", "personal_leave", or "wellbeing_day"
+                  example: "annual_leave"
+                start_date:
+                  type: date
+                  description: Leave start date in YYYY-MM-DD format
+                  example: "2025-08-01"
+                end_date:
+                  type: date
+                  description: Leave end date in YYYY-MM-DD format
+                  example: "2025-08-07"
+                days:
+                  type: integer
+                  description: Number of working days for leave
+                  example: 5
+      responses:
+        '200':
+          description: Leave applied successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Leave applied successfully
+        '400':
+          description: Invalid request or insufficient balance or failed due to past leave date
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: The leave date cannot be in the past
+        '404':
+          description: Employee not found
+
+  /leave/cancel:
+  post:
+    summary: Cancel a leave request
+    description: Cancels a pending leave request by employee ID and start date, and restores the leave balance.
+    tags:
+      - Leave
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - employee_id
+              - start_date
+            properties:
+              employee_id:
+                type: integer
+                example: 13
+              start_date:
+                type: string
+                format: date
+                example: 2024-08-01
+    responses:
+      '200':
+        description: Leave request successfully canceled and balance restored
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: Leave request has been successfully canceled and balance restored.
+                returned_days:
+                  type: integer
+                  example: 1
+                new_balance:
+                  type: integer
+                  example: 3
+      '400':
+        description: Only pending leave requests can be canceled or invalid type
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: Only pending leave requests can be canceled.
+      '404':
+        description: Leave request or employee not found
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: Leave request not found.
+      '500':
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: Failed to restore leave balance.
+                detail:
+                  type: string
+                  example: Unexpected database error.
+
+  /payslips/{employee_id}:
+    get:
+      summary: Get payslips for an employee
+      parameters:
+        - in: path
+          name: employee_id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: List of payslips
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    period:
+                      type: string
+                    file_url:
+                      type: string
+  /trainings/{employee_id}:
+    get:
+      summary: Get trainings for an employee
+      parameters:
+        - in: path
+          name: employee_id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: List of trainings with details
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    training_id:
+                      type: integer
+                    feedback:
+                      type: string
+                    certificate_url:
+                      type: string
+                    trainings:
+                      type: object
+                      properties:
+                        title:
+                          type: string
+                        scheduled_date:
+                          type: string
+                        mandatory:
+                          type: boolean
+  /trainings/{employee_id}/feedback:
+    post:
+      summary: Submit training feedback
+      parameters:
+        - in: path
+          name: employee_id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        description: Feedback details for a training session
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                training_id:
+                  type: integer
+                feedback:
+                  type: string
+      responses:
+        '200':
+          description: Feedback submission result
+          content:
+            application/json:
+              schema:
+                type: object
+  /remote-request:
+    post:
+      summary: Create a remote work request
+      tags:
+        - Remote Request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - employee_id
+                - work_mode
+                - reason
+              properties:
+                employee_id:
+                  type: integer
+                  description: ID of the employee (must exist in employees table)
+                work_mode:
+                  type: string
+                  enum: [remote, hybrid]
+                  description: Type of work mode requested
+                reason:
+                  type: string
+                  description: Reason for remote work request
+      responses:
+        '201':
+          description: Request created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  employee_id:
+                    type: integer
+                  work_mode:
+                    type: string
+                  reason:
+                    type: string
+                  requested_at:
+                    type: string
+                    format: date-time
+                  status:
+                    type: string
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  /performance-review/{employeeId}:
+    get:
+      summary: Get performance review and development plan
+      parameters:
+        - in: path
+          name: employeeId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Performance review details
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    result:
+                      type: string
+                    period:
+                      type: string
+                    year:
+                      type: integer
+                    detail:
+                      type: string
+                    development_plan:
+                      type: string
+  /kpi/{employeeId}:
+    get:
+      summary: Get KPI for an employee
+      parameters:
+        - in: path
+          name: employeeId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: KPI details
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    kpi:
+                      type: string
+  /reward/{employeeId}:
+    get:
+      summary: Get reward records for an employee
+      parameters:
+        - in: path
+          name: employeeId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Reward record details
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    reward:
+                      type: string
+  /disciplinary/{employeeId}:
+    get:
+      summary: Get disciplinary records for an employee
+      parameters:
+        - in: path
+          name: employeeId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Disciplinary records and outcome letter
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    disciplinary:
+                      type: string
+                    outcome_letter:
+                      type: string
+  /grievance/{employeeId}:
+    get:
+      summary: Get grievance records for an employee
+      parameters:
+        - in: path
+          name: employeeId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Grievance record details
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    grievance:
+                      type: string
+                    follow_up:
+                      type: string
+                    document:
+                      type: string
+  /incident/{employeeId}:
+    get:
+      summary: Get incident reports for an employee
+      parameters:
+        - in: path
+          name: employeeId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Incident report details
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    incident:
+                      type: string
+                    follow_up:
+                      type: string
+                    document:
+                      type: string
+  /timesheet/{employeeId}:
+    get:
+      summary: Get timesheet data for an employee
+      parameters:
+        - in: path
+          name: employeeId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Timesheet details
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    timesheet:
+                      type: string
+  /overtime/{employeeId}:
+    get:
+      summary: Get overtime record for an employee
+      parameters:
+        - in: path
+          name: employeeId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Overtime record details
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    ot_record:
+                      type: string
+  /clearance/{employeeId}:
+    get:
+      summary: Get clearance record for an employee
+      parameters:
+        - in: path
+          name: employeeId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Clearance record including resignation date and other details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  resignation_date:
+                    type: string
+                  last_day:
+                    type: string
+                  exit_interview:
+                    type: string
+                  final_pay:
+                    type: string
+                  revoke_it_access:
+                    type: string
+                  collect_returned_assets:
+                    type: string
+                  insurance_termination:
+                    type: string
+                  related_document:
+                    type: string
+  /onboarding/{employeeId}:
+    get:
+      summary: Get onboarding record for an employee
+      parameters:
+        - in: path
+          name: employeeId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Onboarding record details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pre_day_one:
+                    type: string
+                  day_one:
+                    type: string
+                  week_one:
+                    type: string
+                  first_month:
+                    type: string
+                  day_30:
+                    type: string
+                  related_document:
+                    type: string
+  /transfer/{employeeId}:
+    get:
+      summary: Get employee transfer data
+      parameters:
+        - in: path
+          name: employeeId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Transfer record details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  last_position:
+                    type: string
+                  last_position_period:
+                    type: string
+                  new_position:
+                    type: string
+                  start_date_of_new_position:
+                    type: string
+  /workmode/{employeeId}:
+    get:
+      summary: Get work mode status for an employee
+      parameters:
+        - in: path
+          name: employeeId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Current work mode
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  work_mode:
+                    type: string
+  /remote-request/{employeeId}:
+    get:
+      summary: Get remote request details for an employee
+      parameters:
+        - in: path
+          name: employeeId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Remote request data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  work_mode:
+                    type: string
+                  reason:
+                    type: string
+  /remote-checklist/{employeeId}:
+    get:
+      summary: Get remote checklist for an employee
+      parameters:
+        - in: path
+          name: employeeId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Remote checklist details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  work_mode:
+                    type: string
+                  approval:
+                    type: string
+                  internet:
+                    type: string
+                  vpn_access:
+                    type: string
+                  company_devices:
+                    type: string
+                  work_schedule:
+                    type: string
+  /internal-application:
+    post:
+      summary: Apply for internal job
+      requestBody:
+        description: Application details for an internal job
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                employee_id:
+                  type: integer
+                apply_for_position:
+                  type: string
+      responses:
+        '201':
+          description: Application submitted successfully along with application data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    type: object
