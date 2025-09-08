@@ -1,9 +1,9 @@
-require('dotenv').config();
-const Fastify = require('fastify');
-const cors = require('@fastify/cors');
-const { createClient } = require('@supabase/supabase-js');
-const nodemailer = require('nodemailer');
-const jwt = require('jsonwebtoken');
+import 'dotenv/config';
+import Fastify from 'fastify';
+import cors from '@fastify/cors';
+import { createClient } from '@supabase/supabase-js';
+import nodemailer from 'nodemailer';
+import jwt from 'jsonwebtoken';
 
 const fastify = Fastify({ logger: true });
 fastify.register(cors);
@@ -134,7 +134,18 @@ fastify.get('/protected', async (req, reply) => {
   }
 });
 
-module.exports = fastify.ready().then(() => fastify.server);
+const start = async () => {
+  try {
+    await fastify.listen({ port: process.env.PORT || 3000, host: '0.0.0.0' });
+    fastify.log.info(`server listening on ${fastify.server.address().port}`);
+  } catch (err) {
+    fastify.log.error(err);
+    process.exit(1);
+  }
+};
+start();
+
+export default fastify;
 
 // ==================== ROLE GUARD HELPER ====================
 
