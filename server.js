@@ -2,6 +2,7 @@ require('dotenv').config();
 const Fastify = require('fastify');
 const cors = require('@fastify/cors');
 const { createClient } = require('@supabase/supabase-js');
+const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
 
 const fastify = Fastify({ logger: true });
@@ -14,7 +15,31 @@ const supabase = createClient(
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// ==================== LOGIN FLOW ====================
+// Nodemailer Gmail SMTP
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT),
+  secure: true,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
+  }
+});
+
+// Middleware JWT untuk protected endpoint
+fastify.addHook('onRequest', async (request, reply) => {
+  if (request.url.startsWith('/login-request') || request.url.startsWith('/verify-token')) return;
+
+  try {
+    const authHeader = request.headers.authorization;
+    if (!authHeader) throw new Error('Missing token');
+
+    const token = authHeader.split(' ')[1];
+    jwt.verify(token, JWT_SECRET);
+  } catch (err) {
+    reply.code(401).send({ error: 'Unauthorized' });
+  }
+});
 
 // Request OTP
 fastify.post('/login-request', async (request, reply) => {
@@ -22,7 +47,7 @@ fastify.post('/login-request', async (request, reply) => {
 
   const { data: user, error } = await supabase
     .from('users')
-    .select('employee_id, email')
+    .select('id, employee_id, email')
     .eq('email', email)
     .maybeSingle();
 
@@ -31,16 +56,29 @@ fastify.post('/login-request', async (request, reply) => {
   }
 
   const token = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiresAt = new Date(Date.now() + 10 * 60000).toISOString();
+  const expiresAt = new Date(Date.now() + 10 * 60000).toISOString(); // 10 menit
 
   const { error: insertError } = await supabase.from('login_tokens').insert({
     user_id: user.id,
     token,
-    expires_at: expiresAt
+    expires_at: expiresAt,
+    used: false
   });
 
   if (insertError) {
     return reply.code(500).send({ message: 'Failed to generate login token', detail: insertError.message });
+  }
+
+  // Kirim email OTP
+  try {
+    await transporter.sendMail({
+      from: process.env.SMTP_ADMIN_EMAIL,
+      to: email,
+      subject: 'Your OTP Code',
+      text: `Your OTP code is ${token}`
+    });
+  } catch (err) {
+    return reply.code(500).send({ message: 'Failed to send OTP email', detail: err.message });
   }
 
   console.log(`🔑 OTP for ${email}: ${token}`);
@@ -54,7 +92,7 @@ fastify.post('/verify-token', async (request, reply) => {
   const { data: loginToken, error } = await supabase
     .from('login_tokens')
     .select(`
-      id, user_id, expires_at, used,
+      id, user_id, token, expires_at, used,
       users (employee_id, role)
     `)
     .eq('token', token)
@@ -78,31 +116,25 @@ fastify.post('/verify-token', async (request, reply) => {
       employee_id: user.employee_id,
       role: user.role
     },
-    process.env.JWT_SECRET,
+    JWT_SECRET,
     { expiresIn: '1h' }
   );
 
   return reply.send({ token: jwtToken });
 });
 
-// ==================== JWT MIDDLEWARE ====================
-
-fastify.addHook('preHandler', async (request, reply) => {
-  if (['/login-request', '/verify-token', '/'].includes(request.routerPath)) return;
-
-  const authHeader = request.headers.authorization;
-  if (!authHeader) {
-    return reply.code(401).send({ message: 'Missing token' });
-  }
-
+// Contoh protected endpoint
+fastify.get('/protected', async (req, reply) => {
   try {
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    request.user = decoded;
+    const token = req.headers.authorization.split(' ')[1];
+    const decoded = jwt.verify(token, JWT_SECRET);
+    return reply.send(decoded);
   } catch (err) {
-    return reply.code(403).send({ message: 'Invalid token' });
+    reply.code(401).send({ error: 'Unauthorized' });
   }
 });
+
+module.exports = fastify.ready().then(() => fastify.server);
 
 // ==================== ROLE GUARD HELPER ====================
 
@@ -785,10 +817,4 @@ fastify.post('/internal-application', async (request, reply) => {
   return reply.code(201).send({ message: 'Application submitted successfully', data });
 });
 
-fastify.listen({ port: 3000 }, err => {
-  if (err) {
-    fastify.log.error(err);
-    process.exit(1);
-  }
-  console.log('✅ HRIS Fastify server (CSV version) is running on http://localhost:3000');
-});
+
