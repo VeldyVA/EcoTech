@@ -9,9 +9,10 @@ fastify.register(cors);
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_KEY,
-  process.env.JWT_SECRET
+  process.env.SUPABASE_KEY
 );
+
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // ==================== LOGIN FLOW ====================
 
@@ -21,7 +22,7 @@ fastify.post('/login-request', async (request, reply) => {
 
   const { data: user, error } = await supabase
     .from('users')
-    .select('id, email')
+    .select('employee_id, email')
     .eq('email', email)
     .maybeSingle();
 
@@ -105,8 +106,8 @@ fastify.addHook('preHandler', async (request, reply) => {
 
 // ==================== ROLE GUARD HELPER ====================
 
-function canAccess(request, employeeId) {
-  return request.user.role === 'admin' || request.user.employee_id === employeeId;
+function canAccess(request, employee_id) {
+  return request.user.role === 'admin' || request.user.employee_id === employee_id;
 }
 
 // Health check
@@ -131,11 +132,13 @@ fastify.get('/profile/:id', async (request, reply) => {
 
 // PATCH update profile
 fastify.patch('/profile/:id', async (request, reply) => {
+  const id = parseInt(request.params.id);
+  const updates = request.body;
+
   if (request.user.role !== 'admin') {
     return reply.code(403).send({ message: 'Only admin can edit employee data' });
   }
-  const id = parseInt(request.params.id);
-  const updates = request.body;
+
   const { data, error } = await supabase
     .from('employees')
     .update(updates)
@@ -149,7 +152,7 @@ fastify.patch('/profile/:id', async (request, reply) => {
 // GET contract status
 fastify.get('/profile/:id/contract', async (request, reply) => {
   const id = parseInt(request.params.id);
-  if (!canAccess(request, id)) {
+  if (!canAccess(request, employee_id)) {
     return reply.code(403).send({ message: 'Access denied' });
   }
   const { data, error } = await supabase
@@ -496,7 +499,7 @@ fastify.post('/leave/cancel', async (request, reply) => {
 // GET /payslips/:employee_id
 fastify.get('/payslips/:employee_id', async (request, reply) => {
   const employee_id = parseInt(request.params.employee_id);
-  if (!canAccess(request, id)) {
+  if (!canAccess(request, employee_id)) {
     return reply.code(403).send({ message: 'Access denied' });
   }
   const { data, error } = await supabase
@@ -511,7 +514,7 @@ fastify.get('/payslips/:employee_id', async (request, reply) => {
 // GET /trainings/:employee_id
 fastify.get('/trainings/:employee_id', async (request, reply) => {
   const employee_id = parseInt(request.params.employee_id);
-  if (!canAccess(request, id)) {
+  if (!canAccess(request, employee_id)) {
     return reply.code(403).send({ message: 'Access denied' });
   }
   const { data, error } = await supabase
@@ -568,170 +571,197 @@ fastify.post('/remote-request', async (request, reply) => {
 });
 
 // 1. GET Performance Review & Development Plan by Employee ID
-fastify.get('/performance-review/:employeeId', async (request, reply) => {
-  const employeeId = parseInt(request.params.employeeId);
-  if (!canAccess(request, id)) {
+fastify.get('/performance-review/:employee_id', async (request, reply) => {
+  const employee_id = parseInt(request.params.employee_id);
+  if (!canAccess(request, employee_id)) {
     return reply.code(403).send({ message: 'Access denied' });
   }
   const { data, error } = await supabase
     .from('performance_review')
     .select('result, period, year, detail, development_plan')
-    .eq('employee_id', employeeId);
+    .eq('employee_id', employee_id);
   if (error) return reply.code(500).send(error);
   return data;
 });
 
 // 2. GET KPI by Employee ID
-fastify.get('/kpi/:employeeId', async (request, reply) => {
-  const employeeId = parseInt(request.params.employeeId);
-  if (!canAccess(request, id)) {
+fastify.get('/kpi/:employee_id', async (request, reply) => {
+  const employee_id = parseInt(request.params.employee_id);
+  if (!canAccess(request, employee_id)) {
     return reply.code(403).send({ message: 'Access denied' });
   }
   const { data, error } = await supabase
     .from('kpi')
     .select('kpi')
-    .eq('employee_id', employeeId);
+    .eq('employee_id', employee_id);
   if (error) return reply.code(500).send(error);
   return data;
 });
 
 // 3. GET Reward Record by Employee ID
-fastify.get('/reward/:employeeId', async (request, reply) => {
-  const employeeId = parseInt(request.params.employeeId);
-  if (!canAccess(request, id)) {
+fastify.get('/reward/:employee_id', async (request, reply) => {
+  const employee_id = parseInt(request.params.employee_id);
+  if (!canAccess(request, employee_id)) {
     return reply.code(403).send({ message: 'Access denied' });
   }
   const { data, error } = await supabase
     .from('reward')
     .select('reward')
-    .eq('employee_id', employeeId);
+    .eq('employee_id', employee_id);
   if (error) return reply.code(500).send(error);
   return data;
 });
 
 // 4. GET Disciplinary Record by Employee ID
-fastify.get('/disciplinary/:employeeId', async (request, reply) => {
-  const employeeId = parseInt(request.params.employeeId);
-  if (!canAccess(request, id)) {
+fastify.get('/disciplinary/:employee_id', async (request, reply) => {
+  const employee_id = parseInt(request.params.employee_id);
+  if (!canAccess(request, employee_id)) {
     return reply.code(403).send({ message: 'Access denied' });
   }
   const { data, error } = await supabase
     .from('disciplinary')
     .select('disciplinary, outcome_letter')
-    .eq('employee_id', employeeId);
+    .eq('employee_id', employee_id);
   if (error) return reply.code(500).send(error);
   return data;
 });
 
 // 5. GET Grievance Record by Employee ID
-fastify.get('/grievance/:employeeId', async (request, reply) => {
-  const employeeId = parseInt(request.params.employeeId);
-  if (!canAccess(request, id)) {
+fastify.get('/grievance/:employee_id', async (request, reply) => {
+  const employee_id = parseInt(request.params.employee_id);
+  if (!canAccess(request, employee_id)) {
     return reply.code(403).send({ message: 'Access denied' });
   }
   const { data, error } = await supabase
     .from('grievance')
     .select('grievance, follow_up, document')
-    .eq('employee_id', employeeId);
+    .eq('employee_id', employee_id);
   if (error) return reply.code(500).send(error);
   return data;
 });
 
 // 6. GET Incident Report by Employee ID
-fastify.get('/incident/:employeeId', async (request, reply) => {
-  const employeeId = parseInt(request.params.employeeId);
+fastify.get('/incident/:employee_id', async (request, reply) => {
+  const employee_id = parseInt(request.params.employee_id);
+  if (!canAccess(request, employee_id)) {
+    return reply.code(403).send({ message: 'Access denied' });
+  }
   const { data, error } = await supabase
     .from('incident')
     .select('incident, follow_up, document')
-    .eq('employee_id', employeeId);
+    .eq('employee_id', employee_id);
   if (error) return reply.code(500).send(error);
   return data;
 });
 
 // 7. GET Timesheet by Employee ID
-fastify.get('/timesheet/:employeeId', async (request, reply) => {
-  const employeeId = parseInt(request.params.employeeId);
+fastify.get('/timesheet/:employee_id', async (request, reply) => {
+  const employee_id = parseInt(request.params.employee_id);
+  if (!canAccess(request, employee_id)) {
+    return reply.code(403).send({ message: 'Access denied' });
+  }
   const { data, error } = await supabase
     .from('timesheet')
     .select('timesheet')
-    .eq('employee_id', employeeId);
+    .eq('employee_id', employee_id);
   if (error) return reply.code(500).send(error);
   return data;
 });
 
 // 8. GET Overtime Record by Employee ID
-fastify.get('/overtime/:employeeId', async (request, reply) => {
-  const employeeId = parseInt(request.params.employeeId);
+fastify.get('/overtime/:employee_id', async (request, reply) => {
+  const employee_id = parseInt(request.params.employee_id);
+  if (!canAccess(request, employee_id)) {
+    return reply.code(403).send({ message: 'Access denied' });
+  }
   const { data, error } = await supabase
     .from('overtime')
     .select('ot_record')
-    .eq('employee_id', employeeId);
+    .eq('employee_id', employee_id);
   if (error) return reply.code(500).send(error);
   return data;
 });
 
 // 9. GET Clearance Record by Employee ID
-fastify.get('/clearance/:employeeId', async (request, reply) => {
-  const employeeId = parseInt(request.params.employeeId);
+fastify.get('/clearance/:employee_id', async (request, reply) => {
+  const employee_id = parseInt(request.params.employee_id);
+  if (!canAccess(request, employee_id)) {
+    return reply.code(403).send({ message: 'Access denied' });
+  }
   const { data, error } = await supabase
     .from('clearance')
     .select('resignation_date, last_day, exit_interview, final_pay, revoke_it_access,collect_returned_assets, insurance_termination, related_document')
-    .eq('employee_id', employeeId);
+    .eq('employee_id', employee_id);
   if (error) return reply.code(500).send(error);
   return data;
 });
 
 // 10. GET Onboarding Record by Employee ID
-fastify.get('/onboarding/:employeeId', async (request, reply) => {
-  const employeeId = parseInt(request.params.employeeId);
+fastify.get('/onboarding/:employee_id', async (request, reply) => {
+  const employee_id = parseInt(request.params.employee_id);
+  if (!canAccess(request, employee_id)) {
+    return reply.code(403).send({ message: 'Access denied' });
+  }
   const { data, error } = await supabase
     .from('onboarding')
     .select('pre_day_one, day_one, week_one, first_month, day_30, related_document')
-    .eq('employee_id', employeeId);
+    .eq('employee_id', employee_id);
   if (error) return reply.code(500).send(error);
   return data;
 });
 
 // 11. GET Employee Transfer by Employee ID
-fastify.get('/transfer/:employeeId', async (request, reply) => {
-  const employeeId = parseInt(request.params.employeeId);
+fastify.get('/transfer/:employee_id', async (request, reply) => {
+  const employee_id = parseInt(request.params.employee_id);
+  if (!canAccess(request, employee_id)) {
+    return reply.code(403).send({ message: 'Access denied' });
+  }
   const { data, error } = await supabase
     .from('transfer')
     .select('last_position, last_position_period, new_position, start_date_of_new_position')
-    .eq('employee_id', employeeId);
+    .eq('employee_id', employee_id);
   if (error) return reply.code(500).send(error);
   return data;
 });
 
 // 12. GET Work Mode Status by Employee ID
-fastify.get('/workmode/:employeeId', async (request, reply) => {
-  const employeeId = parseInt(request.params.employeeId);
+fastify.get('/workmode/:employee_id', async (request, reply) => {
+  const employee_id = parseInt(request.params.employee_id);
+  if (!canAccess(request, employee_id)) {
+    return reply.code(403).send({ message: 'Access denied' });
+  }
   const { data, error } = await supabase
     .from('work_mode')
     .select('work_mode')
-    .eq('employee_id', employeeId);
+    .eq('employee_id', employee_id);
   if (error) return reply.code(500).send(error);
   return data;
 });
 
 // 13. GET Remote Request by Employee ID
-fastify.get('/remote-request/:employeeId', async (request, reply) => {
-  const employeeId = parseInt(request.params.employeeId);
+fastify.get('/remote-request/:employee_id', async (request, reply) => {
+  const employee_id = parseInt(request.params.employee_id);
+  if (!canAccess(request, employee_id)) {
+    return reply.code(403).send({ message: 'Access denied' });
+  }
   const { data, error } = await supabase
     .from('remote_request')
     .select('work_mode, reason, status')
-    .eq('employee_id', employeeId);
+    .eq('employee_id', employee_id);
   if (error) return reply.code(500).send(error);
   return data;
 });
 
 // 14. GET Remote Checklist by Employee ID
-fastify.get('/remote-checklist/:employeeId', async (request, reply) => {
-  const employeeId = parseInt(request.params.employeeId);
+fastify.get('/remote-checklist/:employee_id', async (request, reply) => {
+  const employee_id = parseInt(request.params.employee_id);
+  if (!canAccess(request, employee_id)) {
+    return reply.code(403).send({ message: 'Access denied' });
+  }
   const { data, error } = await supabase
     .from('remote_checklist')
     .select('work_mode, approval, internet, vpn_access, company_devices, work_schedule')
-    .eq('employee_id', employeeId);
+    .eq('employee_id', employee_id);
   if (error) return reply.code(500).send(error);
   return data;
 });

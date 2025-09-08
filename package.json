@@ -1,4 +1,3 @@
-
 {
   "name": "hris-fastify",
   "version": "1.0.0",
@@ -8,9 +7,11 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "@fastify/cors": "^8.2.1",
-    "dotenv": "^16.3.1",
-    "fastify": "^4.22.2",
-    "@supabase/supabase-js": "^2.38.4"
+    "@fastify/cors": "^8.5.0",
+    "@supabase/supabase-js": "^2.57.2",
+    "dotenv": "^16.6.1",
+    "fastify": "^4.29.1",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^7.0.6"
   }
 }
