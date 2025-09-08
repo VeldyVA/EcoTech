@@ -2,6 +2,7 @@
   "name": "hris-fastify",
   "version": "1.0.0",
   "description": "HRIS Fastify server connected to Supabase",
+  "type": "module",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
