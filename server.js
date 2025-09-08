@@ -2,14 +2,112 @@ require('dotenv').config();
 const Fastify = require('fastify');
 const cors = require('@fastify/cors');
 const { createClient } = require('@supabase/supabase-js');
+const jwt = require('jsonwebtoken');
 
 const fastify = Fastify({ logger: true });
 fastify.register(cors);
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_KEY
+  process.env.SUPABASE_KEY,
+  process.env.JWT_SECRET
 );
+
+// ==================== LOGIN FLOW ====================
+
+// Request OTP
+fastify.post('/login-request', async (request, reply) => {
+  const { email } = request.body;
+
+  const { data: user, error } = await supabase
+    .from('users')
+    .select('id, email')
+    .eq('email', email)
+    .maybeSingle();
+
+  if (error || !user) {
+    return reply.code(404).send({ message: 'Email not found' });
+  }
+
+  const token = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = new Date(Date.now() + 10 * 60000).toISOString();
+
+  const { error: insertError } = await supabase.from('login_tokens').insert({
+    user_id: user.id,
+    token,
+    expires_at: expiresAt
+  });
+
+  if (insertError) {
+    return reply.code(500).send({ message: 'Failed to generate login token', detail: insertError.message });
+  }
+
+  console.log(`🔑 OTP for ${email}: ${token}`);
+  return reply.send({ message: 'Login OTP sent to your email' });
+});
+
+// Verify OTP → JWT
+fastify.post('/verify-token', async (request, reply) => {
+  const { token } = request.body;
+
+  const { data: loginToken, error } = await supabase
+    .from('login_tokens')
+    .select(`
+      id, user_id, expires_at, used,
+      users (employee_id, role)
+    `)
+    .eq('token', token)
+    .maybeSingle();
+
+  if (error || !loginToken) {
+    return reply.code(400).send({ message: 'Invalid token' });
+  }
+
+  if (loginToken.used || new Date(loginToken.expires_at) < new Date()) {
+    return reply.code(400).send({ message: 'Token expired or already used' });
+  }
+
+  await supabase.from('login_tokens').update({ used: true }).eq('id', loginToken.id);
+
+  const user = loginToken.users;
+
+  const jwtToken = jwt.sign(
+    {
+      user_id: loginToken.user_id,
+      employee_id: user.employee_id,
+      role: user.role
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: '1h' }
+  );
+
+  return reply.send({ token: jwtToken });
+});
+
+// ==================== JWT MIDDLEWARE ====================
+
+fastify.addHook('preHandler', async (request, reply) => {
+  if (['/login-request', '/verify-token', '/'].includes(request.routerPath)) return;
+
+  const authHeader = request.headers.authorization;
+  if (!authHeader) {
+    return reply.code(401).send({ message: 'Missing token' });
+  }
+
+  try {
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    request.user = decoded;
+  } catch (err) {
+    return reply.code(403).send({ message: 'Invalid token' });
+  }
+});
+
+// ==================== ROLE GUARD HELPER ====================
+
+function canAccess(request, employeeId) {
+  return request.user.role === 'admin' || request.user.employee_id === employeeId;
+}
 
 // Health check
 fastify.get('/', async (request, reply) => {
@@ -19,6 +117,9 @@ fastify.get('/', async (request, reply) => {
 // GET profile by ID
 fastify.get('/profile/:id', async (request, reply) => {
   const id = parseInt(request.params.id);
+  if (!canAccess(request, id)) {
+    return reply.code(403).send({ message: 'Access denied' });
+  }
   const { data, error } = await supabase
     .from('employees')
     .select('*')
@@ -30,6 +131,9 @@ fastify.get('/profile/:id', async (request, reply) => {
 
 // PATCH update profile
 fastify.patch('/profile/:id', async (request, reply) => {
+  if (request.user.role !== 'admin') {
+    return reply.code(403).send({ message: 'Only admin can edit employee data' });
+  }
   const id = parseInt(request.params.id);
   const updates = request.body;
   const { data, error } = await supabase
@@ -45,6 +149,9 @@ fastify.patch('/profile/:id', async (request, reply) => {
 // GET contract status
 fastify.get('/profile/:id/contract', async (request, reply) => {
   const id = parseInt(request.params.id);
+  if (!canAccess(request, id)) {
+    return reply.code(403).send({ message: 'Access denied' });
+  }
   const { data, error } = await supabase
     .from('employees')
     .select('contract_type, start_date, probation_end, status')
@@ -57,6 +164,9 @@ fastify.get('/profile/:id/contract', async (request, reply) => {
 // GET leave balance
 fastify.get('/profile/:id/leave-balance', async (request, reply) => {
   const id = parseInt(request.params.id);
+  if (!canAccess(request, id)) {
+    return reply.code(403).send({ message: 'Access denied' });
+  }
   const { data, error } = await supabase
     .from('employees')
     .select('annual_leave_balance, personal_leave_balance, wellbeing_day_balance')
@@ -71,6 +181,9 @@ fastify.post('/profile', async (request, reply) => {
   const newEmployee = request.body;
 
   // Ambil id terbesar (terakhir)
+  if (request.user.role !== 'admin') {
+    return reply.code(403).send({ message: 'Only admin can add employee data' });
+  }
   const { data: lastEmployee, error: lastError } = await supabase
     .from('employees')
     .select('id')
@@ -383,6 +496,9 @@ fastify.post('/leave/cancel', async (request, reply) => {
 // GET /payslips/:employee_id
 fastify.get('/payslips/:employee_id', async (request, reply) => {
   const employee_id = parseInt(request.params.employee_id);
+  if (!canAccess(request, id)) {
+    return reply.code(403).send({ message: 'Access denied' });
+  }
   const { data, error } = await supabase
     .from('payslips')
     .select('period, file_url')
@@ -395,6 +511,9 @@ fastify.get('/payslips/:employee_id', async (request, reply) => {
 // GET /trainings/:employee_id
 fastify.get('/trainings/:employee_id', async (request, reply) => {
   const employee_id = parseInt(request.params.employee_id);
+  if (!canAccess(request, id)) {
+    return reply.code(403).send({ message: 'Access denied' });
+  }
   const { data, error } = await supabase
     .from('training_participants')
     .select('training_id, feedback, certificate_url, trainings(title, scheduled_date, mandatory)')
@@ -451,6 +570,9 @@ fastify.post('/remote-request', async (request, reply) => {
 // 1. GET Performance Review & Development Plan by Employee ID
 fastify.get('/performance-review/:employeeId', async (request, reply) => {
   const employeeId = parseInt(request.params.employeeId);
+  if (!canAccess(request, id)) {
+    return reply.code(403).send({ message: 'Access denied' });
+  }
   const { data, error } = await supabase
     .from('performance_review')
     .select('result, period, year, detail, development_plan')
@@ -462,6 +584,9 @@ fastify.get('/performance-review/:employeeId', async (request, reply) => {
 // 2. GET KPI by Employee ID
 fastify.get('/kpi/:employeeId', async (request, reply) => {
   const employeeId = parseInt(request.params.employeeId);
+  if (!canAccess(request, id)) {
+    return reply.code(403).send({ message: 'Access denied' });
+  }
   const { data, error } = await supabase
     .from('kpi')
     .select('kpi')
@@ -473,6 +598,9 @@ fastify.get('/kpi/:employeeId', async (request, reply) => {
 // 3. GET Reward Record by Employee ID
 fastify.get('/reward/:employeeId', async (request, reply) => {
   const employeeId = parseInt(request.params.employeeId);
+  if (!canAccess(request, id)) {
+    return reply.code(403).send({ message: 'Access denied' });
+  }
   const { data, error } = await supabase
     .from('reward')
     .select('reward')
@@ -484,6 +612,9 @@ fastify.get('/reward/:employeeId', async (request, reply) => {
 // 4. GET Disciplinary Record by Employee ID
 fastify.get('/disciplinary/:employeeId', async (request, reply) => {
   const employeeId = parseInt(request.params.employeeId);
+  if (!canAccess(request, id)) {
+    return reply.code(403).send({ message: 'Access denied' });
+  }
   const { data, error } = await supabase
     .from('disciplinary')
     .select('disciplinary, outcome_letter')
@@ -495,6 +626,9 @@ fastify.get('/disciplinary/:employeeId', async (request, reply) => {
 // 5. GET Grievance Record by Employee ID
 fastify.get('/grievance/:employeeId', async (request, reply) => {
   const employeeId = parseInt(request.params.employeeId);
+  if (!canAccess(request, id)) {
+    return reply.code(403).send({ message: 'Access denied' });
+  }
   const { data, error } = await supabase
     .from('grievance')
     .select('grievance, follow_up, document')
