@@ -35,7 +35,8 @@ fastify.addHook('onRequest', async (request, reply) => {
     if (!authHeader) throw new Error('Missing token');
 
     const token = authHeader.split(' ')[1];
-    jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
+    request.user = decoded;
   } catch (err) {
     reply.code(401).send({ error: 'Unauthorized' });
   }
@@ -195,7 +196,7 @@ fastify.patch('/profile/:id', async (request, reply) => {
 // GET contract status
 fastify.get('/profile/:id/contract', async (request, reply) => {
   const id = parseInt(request.params.id);
-  if (!canAccess(request, employee_id)) {
+  if (!canAccess(request, id)) {
     return reply.code(403).send({ message: 'Access denied' });
   }
   const { data, error } = await supabase
@@ -316,7 +317,7 @@ fastify.post('/leave-preview', async (request, reply) => {
 
   const end = new Date(current);
   const pad = (n) => (n < 10 ? '0' + n : n);
-  const end_date = `${pad(end.getDate())}-${pad(end.getMonth() + 1)}-${end.getFullYear()}`;
+  const end_date = `${end.getFullYear()}-${pad(end.getMonth() + 1)}-${pad(end.getDate())}`;
 
   // Ambil saldo cuti
   const { data: employee, error: empError } = await supabase
