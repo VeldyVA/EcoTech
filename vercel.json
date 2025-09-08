@@ -3,12 +3,7 @@
   "builds": [
     {
       "src": "server.js",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": [
-          "node_modules/@supabase/realtime-js/dist/main/lib/websocket-factory.js"
-        ]
-      }
+      "use": "@vercel/node"
     }
   ],
   "rewrites": [
