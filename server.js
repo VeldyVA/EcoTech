@@ -1,5 +1,30 @@
+// ===== Runtime Info =====
+console.log("===== Runtime Info =====");
+console.log("Node.js version:", process.version);
+console.log("NPM version:", process.env.npm_config_user_agent || "unknown");
+
+// createRequire biar bisa baca package.json walau project ESM
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+
+try {
+  const wsPkg = require("ws/package.json");
+  console.log("WS version:", wsPkg.version);
+} catch (err) {
+  console.log("WS not found");
+}
+
+console.log("========================\n");
+
+// ===== Debug Environment =====
+console.log("===== DEBUG ENV =====");
+console.log("Supabase URL:", process.env.SUPABASE_URL);
+console.log("Supabase Key length:", process.env.SUPABASE_KEY?.length);
+console.log("====================\n");
+
 console.log('--- SCRIPT START ---');
-import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config();
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { createClient } from '@supabase/supabase-js';
@@ -15,6 +40,19 @@ const supabase = createClient(
 );
 
 const JWT_SECRET = process.env.JWT_SECRET;
+
+// 🔹 Tambahin endpoint sebelum start()
+fastify.get('/health', async () => {
+  return {
+    status: 'ok',
+    node: process.version,
+    supabaseUrl: process.env.SUPABASE_URL ? 'configured' : 'missing'
+  };
+});
+
+fastify.get('/', async () => {
+  return { message: 'EcoTech HRIS API is running 🚀' };
+});
 
 // Nodemailer Gmail SMTP
 const transporter = nodemailer.createTransport({
@@ -52,6 +90,8 @@ fastify.post('/login-request', async (request, reply) => {
     .select('id, employee_id, email')
     .eq('email', email)
     .maybeSingle();
+
+  console.log('Query result:', { user, error });  // <-- ini tambahan debug
 
   if (error || !user) {
     return reply.code(404).send({ message: 'Email not found' });
@@ -154,11 +194,6 @@ export default fastify;
 function canAccess(request, employee_id) {
   return request.user.role === 'admin' || request.user.employee_id === employee_id;
 }
-
-// Health check
-fastify.get('/', async (request, reply) => {
-  return { message: 'HRIS server is running 👋' };
-});
 
 // GET profile by ID
 fastify.get('/profile/:id', async (request, reply) => {
