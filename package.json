@@ -4,16 +4,24 @@
   "description": "HRIS Fastify server connected to Supabase",
   "type": "module",
   "main": "server.js",
+  "engines": {
+  "node": "20.x"
+},
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "@fastify/cors": "^8.5.0",
-    "@supabase/supabase-js": "^2.43.4",
+    "@supabase/supabase-js": "^2.57.2",
     "dotenv": "^16.6.1",
     "fastify": "^4.29.1",
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^7.0.6",
-    "ws": "^8.18.3"
+    "ws": "7.5.9"
+
+  },
+  "overrides": {
+    "ws": "7.5.9"
   }
 }
+
