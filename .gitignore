@@ -19,3 +19,4 @@ openjdk.pkg
 
 # VSCode
 .vscode/
+.vercel
