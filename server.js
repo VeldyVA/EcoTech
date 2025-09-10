@@ -96,10 +96,10 @@ fastify.addHook('onRequest', async (request, reply) => {
 fastify.post('/login-request', async (request, reply) => {
   const { email } = request.body;
 
-  const { data: employee, error: empError } = await supabase
-    .from('employees')
-    .select('id, email, role')
-    .eq('email', email)
+  const { data: user, error: userError } = await supabase
+    .from('users')
+    .select('employee_id, role')
+    .eq('employee_id', loginToken.employee_id)
     .maybeSingle();
 
 if (empError || !employee) {
