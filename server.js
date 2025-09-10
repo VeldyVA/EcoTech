@@ -200,22 +200,22 @@ function canAccess(request, employee_id) {
 }
 
 // GET profile by ID
-fastify.get('/profile/:id', async (request, reply) => {
-  const id = parseInt(request.params.id);
-  if (!canAccess(request, id)) {
+fastify.get('/profile/:employee_id', async (request, reply) => {
+  const employee_id  = parseInt(request.params.id);
+  if (!canAccess(request, employee_id)) {
     return reply.code(403).send({ message: 'Access denied' });
   }
   const { data, error } = await supabase
     .from('employees')
     .select('*')
-    .eq('id', id)
+    .eq('id', employee_id)
     .maybeSingle();
   if (error) return reply.code(500).send(error);
   return data || { message: 'Employee not found' };
 });
 
 // PATCH update profile
-fastify.patch('/profile/:id', async (request, reply) => {
+fastify.patch('/profile/:employee_id', async (request, reply) => {
   const id = parseInt(request.params.id);
   const updates = request.body;
 
