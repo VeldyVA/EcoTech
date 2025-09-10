@@ -139,7 +139,10 @@ fastify.post('/login-request', async (request, reply) => {
 
 // Verify OTP → JWT
 fastify.post('/verify-token', async (request, reply) => {
-  const { token } = request.body;
+  const token = request.body?.token || request.query?.token || request.headers['x-token'];
+    if (!token) {
+      return reply.code(400).send({ message: 'Token missing' });
+    }
 
   const { data: loginToken, error } = await supabase
     .from('login_tokens')
