@@ -80,13 +80,6 @@ fastify.addHook('onRequest', async (request, reply) => {
     return;
   }
 
-  // Log a more detailed message for debugging protected routes
-  fastify.log.info({
-    url: request.url,
-    method: request.method,
-    headers: request.headers
-  }, 'Protected route access attempt');
-
   try {
     let token;
 
@@ -94,31 +87,23 @@ fastify.addHook('onRequest', async (request, reply) => {
     const authHeader = request.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
       token = authHeader.split(' ')[1];
-      fastify.log.info('Token found in Authorization header');
     }
 
     // fallback ke header custom X-Token
     if (!token) {
       token = request.headers['x-token'];
-      if (token) fastify.log.info('Token found in x-token header');
     }
 
     // fallback ke query param (opsional)
     if (!token) {
       token = request.query?.token;
-      if (token) fastify.log.info('Token found in query parameter');
     }
 
-    if (!token) {
-      fastify.log.warn({ url: request.url }, 'Missing token for protected route');
-      throw new Error('Missing token');
-    }
+    if (!token) throw new Error('Missing token');
 
     const decoded = jwt.verify(token, JWT_SECRET);
     request.user = decoded;
-    fastify.log.info({ user: decoded }, 'Token verified successfully');
   } catch (err) {
-    fastify.log.error({ err: err.message, url: request.url }, 'Authentication error');
     reply.code(401).send({ error: 'Unauthorized' });
   }
 });
