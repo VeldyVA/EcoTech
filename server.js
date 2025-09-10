@@ -106,11 +106,10 @@ if (empError || !employee) {
   return reply.code(400).send({ message: 'Employee not found' });
 }
 
-  const token = Math.floor(100000 + Math.random() * 900000).toString();
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const expiresAt = new Date(Date.now() + 10 * 60000).toISOString(); // 10 menit
 
   const { error: insertError } = await supabase.from('login_tokens').insert({
-    user_id: user.id,          // dari tabel users
     employee_id: employee.id,  // dari tabel employees
     token: otp,
     expires_at: expiresAt,
@@ -127,13 +126,13 @@ if (empError || !employee) {
       from: process.env.SMTP_ADMIN_EMAIL,
       to: email,
       subject: 'Your OTP Code',
-      text: `Your OTP code is ${token}`
+      text: `Your OTP code is ${otp}`
     });
   } catch (err) {
     return reply.code(500).send({ message: 'Failed to send OTP email', detail: err.message });
   }
 
-  console.log(`🔑 OTP for ${email}: ${token}`);
+  console.log(`🔑 OTP for ${email}: ${otp}`);
   return reply.send({ message: 'Login OTP sent to your email' });
 });
 
