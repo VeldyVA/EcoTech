@@ -146,7 +146,7 @@ fastify.post('/verify-token', async (request, reply) => {
     .from('login_tokens')
     .select(`
       id, user_id, token, expires_at, used,
-      users (employee_id, role)
+      users (email)
     `)
     .eq('token', token)
     .maybeSingle();
@@ -159,14 +159,24 @@ fastify.post('/verify-token', async (request, reply) => {
     return reply.code(400).send({ message: 'Token expired or already used' });
   }
 
+  // tandai token sudah dipakai
   await supabase.from('login_tokens').update({ used: true }).eq('id', loginToken.id);
 
-  const user = loginToken.users;
+  // cari employee_id berdasarkan email
+  const { data: employee, error: empError } = await supabase
+    .from('employees')
+    .select('id, role')
+    .eq('email', loginToken.users.email)
+    .maybeSingle();
+
+  if (empError || !employee) {
+    return reply.code(401).send({ error: 'Employee not found' });
+  }
 
   const jwtToken = jwt.sign(
     {
-      employee_id: user.employee_id,
-      role: user.role
+      employee_id: employee.id,
+      role: employee.role
     },
     JWT_SECRET,
     { expiresIn: '1h' }
