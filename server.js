@@ -112,11 +112,12 @@ fastify.post('/login-request', async (request, reply) => {
   const expiresAt = new Date(Date.now() + 10 * 60000).toISOString(); // 10 menit
 
   const { error: insertError } = await supabase.from('login_tokens').insert({
-    user_id: user.id,
-    token,
-    expires_at: expiresAt,
-    used: false
-  });
+  user_id: user.id,          // dari tabel users
+  employee_id: employee.id,  // dari tabel employees
+  token: otp,
+  expires_at: expiresAt,
+  used: false
+});
 
   if (insertError) {
     return reply.code(500).send({ message: 'Failed to generate login token', detail: insertError.message });
@@ -145,8 +146,7 @@ fastify.post('/verify-token', async (request, reply) => {
   const { data: loginToken, error } = await supabase
     .from('login_tokens')
     .select(`
-      id, user_id, token, expires_at, used,
-      users (email)
+      id, employee_id, token, expires_at, used
     `)
     .eq('token', token)
     .maybeSingle();
@@ -166,7 +166,7 @@ fastify.post('/verify-token', async (request, reply) => {
   const { data: employee, error: empError } = await supabase
     .from('employees')
     .select('id, role')
-    .eq('email', loginToken.users.email)
+    .eq('id', loginToken.employee_id)
     .maybeSingle();
 
   if (empError || !employee) {
