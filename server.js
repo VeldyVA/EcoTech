@@ -176,22 +176,11 @@ fastify.get('/protected', async (req, reply) => {
   }
 });
 
-// Block ini hanya akan jalan di lingkungan lokal, bukan di Vercel
-if (!process.env.VERCEL) {
-  const start = async () => {
-    try {
-      const port = process.env.PORT || 3000;
-      await fastify.listen({ port: port, host: '0.0.0.0' });
-      console.log(`Server listening locally on port ${port}`);
-    } catch (err) {
-      fastify.log.error(err);
-      process.exit(1);
-    }
-  };
-  start();
-}
-
-export default fastify;
+// Vercel serverless handler
+export default async (req, res) => {
+  await fastify.ready();
+  fastify.server.emit('request', req, res);
+};
 
 // ==================== ROLE GUARD HELPER ====================
 
@@ -868,5 +857,3 @@ fastify.post('/internal-application', async (request, reply) => {
   if (error) return reply.code(500).send(error);
   return reply.code(201).send({ message: 'Application submitted successfully', data });
 });
-
-
