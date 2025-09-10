@@ -164,7 +164,7 @@ fastify.post('/verify-token', async (request, reply) => {
   let employee = null;
   const maxRetries = 3;
   for (let i = 0; i < maxRetries; i++) {
-    const { data: employee, error: empError } = await supabase
+    const { data, error: empError } = await supabase
       .from('employees')
       .select(`id, users!inner(role)`)
       .eq('id', parseInt(loginToken.employee_id, 10))
@@ -175,16 +175,14 @@ fastify.post('/verify-token', async (request, reply) => {
       console.error('Supabase employee query error:', empError);
     }
 
-    if (empData) {
-      employee = empData;
-      break; // ketemu employee, hentikan retry
-    }
+    if (data) { employee = data; break; }
+
 
     // jika belum ketemu, tunggu sebentar sebelum retry
     await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay
   }
 
-  if (empError || !employee) {
+  if (!employee) {
     return reply.code(401).send({ error: 'Employee not found' });
   }
 
