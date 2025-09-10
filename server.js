@@ -81,10 +81,26 @@ fastify.addHook('onRequest', async (request, reply) => {
   }
 
   try {
-    const authHeader = request.headers.authorization;
-    if (!authHeader) throw new Error('Missing token');
+    let token;
 
-    const token = authHeader.split(' ')[1];
+    // cek header Authorization Bearer
+    const authHeader = request.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    }
+
+    // fallback ke header custom X-Token
+    if (!token) {
+      token = request.headers['x-token'];
+    }
+
+    // fallback ke query param (opsional)
+    if (!token) {
+      token = request.query?.token;
+    }
+
+    if (!token) throw new Error('Missing token');
+
     const decoded = jwt.verify(token, JWT_SECRET);
     request.user = decoded;
   } catch (err) {
