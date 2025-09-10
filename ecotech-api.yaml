@@ -87,9 +87,30 @@ paths:
           description: Decoded JWT payload
         '401':
           description: Unauthorized
-  /profile/{employee_id}:
+  /profile:
     get:
-      summary: Get employee profile by ID
+      summary: Get own profile from JWT
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Employee data for the logged-in user
+    post:
+      summary: Add new employee profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: New employee created
+  /admin/profile/{employee_id}:
+    get:
+      summary: ADMIN - Get employee profile by ID
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: employee_id
@@ -99,6 +120,9 @@ paths:
       responses:
         '200':
           description: Employee data or not found message
+        '403':
+          description: Access denied, admin only
+  /profile/{employee_id}:
     patch:
       summary: Update employee profile by ID
       parameters:
@@ -140,18 +164,6 @@ paths:
       responses:
         '200':
           description: Leave balance details
-  /profile:
-    post:
-      summary: Add new employee profile
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-      responses:
-        '201':
-          description: New employee created
   /leave-preview:
     post:
       summary: Preview leave request and check balance

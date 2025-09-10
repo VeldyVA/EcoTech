@@ -165,7 +165,6 @@ fastify.post('/verify-token', async (request, reply) => {
 
   const jwtToken = jwt.sign(
     {
-      user_id: loginToken.user_id,
       employee_id: user.employee_id,
       role: user.role
     },
@@ -199,17 +198,33 @@ function canAccess(request, employee_id) {
   return request.user.role === 'admin' || request.user.employee_id === employee_id;
 }
 
-// GET profile by ID
-fastify.get('/profile/:employee_id', async (request, reply) => {
-  const { employee_id } = request.params;
-  if (!canAccess(request, parseInt(employee_id))) {
-    return reply.code(403).send({ message: 'Access denied' });
-  }
+// GET own profile from JWT
+fastify.get('/profile', async (request, reply) => {
+  const employee_id = request.user.employee_id; // from JWT
+
   const { data, error } = await supabase
     .from('employees')
     .select('*')
     .eq('id', employee_id)
     .maybeSingle();
+
+  if (error) return reply.code(500).send(error);
+  return data || { message: 'Employee not found' };
+});
+
+// ADMIN: GET profile by ID
+fastify.get('/admin/profile/:employee_id', async (request, reply) => {
+  if (request.user.role !== 'admin') {
+    return reply.code(403).send({ message: 'Access denied: Admin only' });
+  }
+  
+  const { employee_id } = request.params;
+  const { data, error } = await supabase
+    .from('employees')
+    .select('*')
+    .eq('id', employee_id)
+    .maybeSingle();
+    
   if (error) return reply.code(500).send(error);
   return data || { message: 'Employee not found' };
 });
