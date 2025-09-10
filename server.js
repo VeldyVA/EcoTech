@@ -96,22 +96,10 @@ fastify.addHook('onRequest', async (request, reply) => {
 fastify.post('/login-request', async (request, reply) => {
   const { email } = request.body;
 
-  const { data: user, error } = await supabase
-    .from('users')
-    .select('id, employee_id, email')
-    .eq('email', email)
-    .maybeSingle();
-
-  console.log('Query result:', { user, error });  // <-- ini tambahan debug
-
-  if (error || !user) {
-    return reply.code(404).send({ message: 'Email not found' });
-  }
-
   const { data: employee, error: empError } = await supabase
     .from('employees')
     .select('id, email, role')
-    .eq('id', user.employee_id)
+    .eq('email', email)
     .maybeSingle();
 
 if (empError || !employee) {
@@ -123,7 +111,7 @@ if (empError || !employee) {
 
   const { error: insertError } = await supabase.from('login_tokens').insert({
     user_id: user.id,          // dari tabel users
-    employee_id: employees.id,  // dari tabel employees
+    employee_id: employee.id,  // dari tabel employees
     token: otp,
     expires_at: expiresAt,
     used: false
