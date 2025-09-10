@@ -201,8 +201,8 @@ function canAccess(request, employee_id) {
 
 // GET profile by ID
 fastify.get('/profile/:employee_id', async (request, reply) => {
-  const employee_id  = parseInt(request.params.id);
-  if (!canAccess(request, employee_id)) {
+  const { employee_id } = request.params;
+  if (!canAccess(request, parseInt(employee_id))) {
     return reply.code(403).send({ message: 'Access denied' });
   }
   const { data, error } = await supabase
@@ -216,7 +216,7 @@ fastify.get('/profile/:employee_id', async (request, reply) => {
 
 // PATCH update profile
 fastify.patch('/profile/:employee_id', async (request, reply) => {
-  const id = parseInt(request.params.id);
+  const { employee_id } = request.params;
   const updates = request.body;
 
   if (request.user.role !== 'admin') {
@@ -226,7 +226,7 @@ fastify.patch('/profile/:employee_id', async (request, reply) => {
   const { data, error } = await supabase
     .from('employees')
     .update(updates)
-    .eq('id', id)
+    .eq('id', employee_id)
     .select('*')
     .single();
   if (error) return reply.code(500).send(error);
@@ -234,30 +234,30 @@ fastify.patch('/profile/:employee_id', async (request, reply) => {
 });
 
 // GET contract status
-fastify.get('/profile/:id/contract', async (request, reply) => {
-  const id = parseInt(request.params.id);
-  if (!canAccess(request, id)) {
+fastify.get('/profile/:employee_id/contract', async (request, reply) => {
+  const { employee_id } = request.params;
+  if (!canAccess(request, parseInt(employee_id))) {
     return reply.code(403).send({ message: 'Access denied' });
   }
   const { data, error } = await supabase
     .from('employees')
     .select('contract_type, start_date, probation_end, status')
-    .eq('id', id)
+    .eq('id', employee_id)
     .maybeSingle();
   if (error) return reply.code(500).send(error);
   return data || { message: 'Employee not found' };
 });
 
 // GET leave balance
-fastify.get('/profile/:id/leave-balance', async (request, reply) => {
-  const id = parseInt(request.params.id);
-  if (!canAccess(request, id)) {
+fastify.get('/profile/:employee_id/leave-balance', async (request, reply) => {
+  const { employee_id } = request.params;
+  if (!canAccess(request, parseInt(employee_id))) {
     return reply.code(403).send({ message: 'Access denied' });
   }
   const { data, error } = await supabase
     .from('employees')
     .select('annual_leave_balance, personal_leave_balance, wellbeing_day_balance')
-    .eq('id', id)
+    .eq('id', employee_id)
     .maybeSingle();
   if (error) return reply.code(500).send(error);
   return data || { message: 'Leave data not found' };
