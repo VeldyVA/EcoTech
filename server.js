@@ -160,12 +160,29 @@ fastify.post('/verify-token', async (request, reply) => {
   // tandai token sudah dipakai
   await supabase.from('login_tokens').update({ used: true }).eq('id', loginToken.id);
 
-  // cari employee_id berdasarkan id dari login_token
-  const { data: employee, error: empError } = await supabase
-    .from('employees')
-    .select('id, role')
-    .eq('id', parseInt(loginToken.employee_id, 10)) // Pastikan tipe data integer
-    .maybeSingle();
+  // 🔹 Tambahkan retry loop untuk mengatasi kemungkinan race condition
+  let employee = null;
+  const maxRetries = 3;
+  for (let i = 0; i < maxRetries; i++) {
+    const { data: empData, error: empError } = await supabase
+      .from('employees')
+      .select('id, role')
+      .eq('id', parseInt(loginToken.employee_id, 10))
+      .maybeSingle();
+
+    if (empError) {
+      // optional: log error internal
+      console.error('Supabase employee query error:', empError);
+    }
+
+    if (empData) {
+      employee = empData;
+      break; // ketemu employee, hentikan retry
+    }
+
+    // jika belum ketemu, tunggu sebentar sebelum retry
+    await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay
+  }
 
   if (empError || !employee) {
     return reply.code(401).send({ error: 'Employee not found' });
