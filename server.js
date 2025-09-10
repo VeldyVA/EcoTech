@@ -160,11 +160,11 @@ fastify.post('/verify-token', async (request, reply) => {
   // tandai token sudah dipakai
   await supabase.from('login_tokens').update({ used: true }).eq('id', loginToken.id);
 
-  // cari employee_id berdasarkan email
+  // cari employee_id berdasarkan id dari login_token
   const { data: employee, error: empError } = await supabase
     .from('employees')
     .select('id, role')
-    .eq('id', loginToken.employee_id)
+    .eq('id', parseInt(loginToken.employee_id, 10)) // Pastikan tipe data integer
     .maybeSingle();
 
   if (empError || !employee) {
