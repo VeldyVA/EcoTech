@@ -108,15 +108,25 @@ fastify.post('/login-request', async (request, reply) => {
     return reply.code(404).send({ message: 'Email not found' });
   }
 
+  const { data: employee, error: empError } = await supabase
+    .from('employees')
+    .select('id, email, role')
+    .eq('id', user.employee_id)
+    .maybeSingle();
+
+if (empError || !employee) {
+  return reply.code(400).send({ message: 'Employee not found' });
+}
+
   const token = Math.floor(100000 + Math.random() * 900000).toString();
   const expiresAt = new Date(Date.now() + 10 * 60000).toISOString(); // 10 menit
 
   const { error: insertError } = await supabase.from('login_tokens').insert({
-  user_id: user.id,          // dari tabel users
-  employee_id: employee.id,  // dari tabel employees
-  token: otp,
-  expires_at: expiresAt,
-  used: false
+    user_id: user.id,          // dari tabel users
+    employee_id: employees.id,  // dari tabel employees
+    token: otp,
+    expires_at: expiresAt,
+    used: false
 });
 
   if (insertError) {
