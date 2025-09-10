@@ -67,7 +67,18 @@ const transporter = nodemailer.createTransport({
 
 // Middleware JWT untuk protected endpoint
 fastify.addHook('onRequest', async (request, reply) => {
-  if (request.url.startsWith('/login-request') || request.url.startsWith('/verify-token')) return;
+  const publicRoutes = [
+    '/',
+    '/health',
+    '/favicon.ico',
+    '/favicon.png',
+    '/login-request',
+    '/verify-token'
+  ];
+
+  if (publicRoutes.some(route => request.url === route || request.url.startsWith(route + '/'))) {
+    return;
+  }
 
   try {
     const authHeader = request.headers.authorization;
