@@ -164,9 +164,9 @@ fastify.post('/verify-token', async (request, reply) => {
   let employee = null;
   const maxRetries = 3;
   for (let i = 0; i < maxRetries; i++) {
-    const { data: empData, error: empError } = await supabase
+    const { data: employee, error: empError } = await supabase
       .from('employees')
-      .select('id, role')
+      .select(`id, users!inner(role)`)
       .eq('id', parseInt(loginToken.employee_id, 10))
       .maybeSingle();
 
@@ -191,7 +191,7 @@ fastify.post('/verify-token', async (request, reply) => {
   const jwtToken = jwt.sign(
     {
       employee_id: employee.id,
-      role: employee.role
+      role: employee.users.role
     },
     JWT_SECRET,
     { expiresIn: '1h' }
