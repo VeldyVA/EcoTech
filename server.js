@@ -160,9 +160,6 @@ fastify.post('/verify-token', async (request, reply) => {
   // tandai token sudah dipakai
   await supabase.from('login_tokens').update({ used: true }).eq('id', loginToken.id);
 
-  // Logging untuk debug
-  console.log('Login Token Found:', loginToken);
-
   // cari employee_id berdasarkan id dari login_token
   const { data: employee, error: empError } = await supabase
     .from('employees')
