@@ -96,15 +96,16 @@ fastify.addHook('onRequest', async (request, reply) => {
 fastify.post('/login-request', async (request, reply) => {
   const { email } = request.body;
 
-  const { data: user, error: userError } = await supabase
-    .from('users')
-    .select('employee_id, role')
-    .eq('employee_id', loginToken.employee_id)
+  // Cari employee berdasarkan email
+  const { data: employee, error: empError } = await supabase
+    .from('employees')
+    .select('id')
+    .eq('email', email)
     .maybeSingle();
 
-if (empError || !employee) {
-  return reply.code(400).send({ message: 'Employee not found' });
-}
+  if (empError || !employee) {
+    return reply.code(400).send({ message: 'Employee not found' });
+  }
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const expiresAt = new Date(Date.now() + 10 * 60000).toISOString(); // 10 menit
@@ -114,7 +115,7 @@ if (empError || !employee) {
     token: otp,
     expires_at: expiresAt,
     used: false
-});
+  });
 
   if (insertError) {
     return reply.code(500).send({ message: 'Failed to generate login token', detail: insertError.message });
