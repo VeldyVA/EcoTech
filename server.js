@@ -141,35 +141,35 @@ fastify.post('/login-request', async (request, reply) => {
 fastify.post('/verify-token', async (request, reply) => {
   const { token } = request.body;
 
-  // Query login_tokens dan join tabel employees dalam satu panggilan
   const { data: loginToken, error } = await supabase
     .from('login_tokens')
     .select(`
-      id, 
-      expires_at, 
-      used,
-      employees ( id, role )
+      id, employee_id, token, expires_at, used
     `)
     .eq('token', token)
     .maybeSingle();
 
   if (error || !loginToken) {
-    return reply.code(400).send({ message: 'Invalid token', detail: error?.message });
-  }
-
-  // Data employee sekarang ada di dalam properti 'employees'
-  const employee = loginToken.employees;
-
-  if (!employee) {
-    return reply.code(401).send({ error: 'Employee not found for this token' });
+    return reply.code(400).send({ message: 'Invalid token' });
   }
 
   if (loginToken.used || new Date(loginToken.expires_at) < new Date()) {
     return reply.code(400).send({ message: 'Token expired or already used' });
   }
 
-  // Tandai token sebagai sudah digunakan
+  // tandai token sudah dipakai
   await supabase.from('login_tokens').update({ used: true }).eq('id', loginToken.id);
+
+  // cari employee_id berdasarkan id dari login_token
+  const { data: employee, error: empError } = await supabase
+    .from('employees')
+    .select('id, role')
+    .eq('id', parseInt(loginToken.employee_id, 10)) // Pastikan tipe data integer
+    .maybeSingle();
+
+  if (empError || !employee) {
+    return reply.code(401).send({ error: 'Employee not found' });
+  }
 
   const jwtToken = jwt.sign(
     {
