@@ -201,6 +201,15 @@ fastify.post('/verify-token', async (request, reply) => {
     return reply.code(401).send({ error: 'Employee not found' });
   }
 
+  // Log the retrieved employee object to debug role issues
+  console.log('Retrieved employee data for JWT signing:', JSON.stringify(employee, null, 2));
+
+  // Critical check for user role
+  if (!employee.users || !employee.users.role) {
+    console.error('ERROR: User role not found for employee_id:', employee.id);
+    return reply.code(500).send({ error: 'Failed to retrieve user role.' });
+  }
+
   const jwtToken = jwt.sign(
     {
       employee_id: employee.id,
