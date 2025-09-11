@@ -65,8 +65,9 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// Middleware JWT untuk protected endpoint
+// Middleware JWT untuk endpoint protected
 fastify.addHook('onRequest', async (request, reply) => {
+  // Daftar endpoint publik yang tidak perlu JWT
   const publicRoutes = [
     '/',
     '/health',
@@ -77,34 +78,20 @@ fastify.addHook('onRequest', async (request, reply) => {
   ];
 
   if (publicRoutes.some(route => request.url === route || request.url.startsWith(route + '/'))) {
-    return;
+    return; // skip middleware untuk route publik
   }
 
   try {
-    let token;
-
-    // cek header Authorization Bearer
     const authHeader = request.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      token = authHeader.split(' ')[1];
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new Error('Missing or invalid token');
     }
 
-    // fallback ke header custom X-Token
-    if (!token) {
-      token = request.headers['x-token'];
-    }
-
-    // fallback ke query param (opsional)
-    if (!token) {
-      token = request.query?.token;
-    }
-
-    if (!token) throw new Error('Missing token');
-
+    const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, JWT_SECRET);
-    request.user = decoded;
+    request.user = decoded; // bisa diakses di route handler
   } catch (err) {
-    reply.code(401).send({ error: 'Unauthorized' });
+    return reply.code(401).send({ error: 'Unauthorized' });
   }
 });
 
