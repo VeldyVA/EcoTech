@@ -82,12 +82,21 @@ fastify.addHook('onRequest', async (request, reply) => {
   }
 
   try {
+    let token;
+
+    // cek header Authorization Bearer
     const authHeader = request.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new Error('Missing or invalid token');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
     }
 
-    const token = authHeader.split(' ')[1];
+    // fallback ke body.token untuk Pusaka
+    if (!token && request.body && request.body.token) {
+      token = request.body.token;
+    }
+
+    if (!token) throw new Error('Missing token');
+    
     const decoded = jwt.verify(token, JWT_SECRET);
     request.user = decoded; // bisa diakses di route handler
   } catch (err) {
