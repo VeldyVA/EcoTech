@@ -216,7 +216,7 @@ fastify.post('/verify-token', async (request, reply) => {
     { expiresIn: '1h' }
   );
 
-  return reply.send({ token: jwtToken });
+  return reply.send({ token: jwtToken, role: employee.role });
 });
 
 // Contoh protected endpoint
