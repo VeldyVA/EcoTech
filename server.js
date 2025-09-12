@@ -181,7 +181,7 @@ fastify.post('/verify-token', async (request, reply) => {
   for (let i = 0; i < maxRetries; i++) {
     const { data, error: empError } = await supabase
       .from('employees')
-      .select(`id, users!inner(role)`)
+      .select(`id, role`)
       .eq('id', parseInt(loginToken.employee_id, 10))
       .maybeSingle();
 
@@ -201,16 +201,16 @@ fastify.post('/verify-token', async (request, reply) => {
     return reply.code(401).send({ error: 'Employee not found' });
   }
 
-  // Critical check for user role from the array
-  if (!employee.users || !Array.isArray(employee.users) || employee.users.length === 0 || !employee.users[0].role) {
-    console.error('ERROR: User role not found or in unexpected format for employee_id:', employee.id, JSON.stringify(employee));
+  // Critical check for user role from the new column
+  if (!employee.role) {
+    console.error('ERROR: User role not found in employees table for employee_id:', employee.id);
     return reply.code(500).send({ error: 'Failed to retrieve user role.' });
   }
 
   const jwtToken = jwt.sign(
     {
       employee_id: employee.id,
-      role: employee.users[0].role // CORRECTED: Access the first element of the array
+      role: employee.role // SIMPLIFIED: Read directly from the new column
     },
     JWT_SECRET,
     { expiresIn: '1h' }
