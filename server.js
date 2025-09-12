@@ -383,24 +383,26 @@ fastify.post('/profile', async (request, reply) => {
 fastify.post('/leave-preview', async (request, reply) => {
   const { employee_id, leave_type, start_date, days } = request.body;
 
-  // Konversi start_date ke objek Date
-  const start = new Date(start_date); // Asumsikan format sudah 'YYYY-MM-DD'
+  // TIMEZONE-SAFE DATE PARSING
+  const dateParts = start_date.split('-').map(Number);
+  const start = new Date(Date.UTC(dateParts[0], dateParts[1] - 1, dateParts[2]));
+
+  if (isNaN(start.getTime())) {
+    return reply.code(400).send({ message: 'Invalid start_date format. Please use YYYY-MM-DD.' });
+  }
+
   const current = new Date(start);
 
-  const dayOfWeek = start.getDay();
+  const dayOfWeek = start.getUTCDay(); // Use getUTCDay()
   if (dayOfWeek === 0 || dayOfWeek === 6) {
     return reply.code(400).send({
       message: 'Leave start date cannot fall on a Saturday or Sunday'
     });
   }
 
-  // ❗ Validasi cuti tidak bisa backdate
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const startClone = new Date(start);
-  startClone.setHours(0, 0, 0, 0);
-
-  if (startClone < today) {
+  today.setUTCHours(0, 0, 0, 0);
+  if (start < today) {
     return reply.code(400).send({
       message: 'Tanggal cuti tidak boleh di masa lalu'
     });
@@ -409,14 +411,14 @@ fastify.post('/leave-preview', async (request, reply) => {
   // Hitung end_date berdasarkan hari kerja
   let workDays = 0;
   while (workDays < days) {
-    const d = current.getDay(); // 0: Minggu, 6: Sabtu
+    const d = current.getUTCDay(); // Use getUTCDay()
     if (d !== 0 && d !== 6) workDays++;
-    if (workDays < days) current.setDate(current.getDate() + 1);
+    if (workDays < days) current.setUTCDate(current.getUTCDate() + 1); // Use setUTCDate()
   }
 
   const end = new Date(current);
   const pad = (n) => (n < 10 ? '0' + n : n);
-  const end_date = `${end.getFullYear()}-${pad(end.getMonth() + 1)}-${pad(end.getDate())}`;
+  const end_date = `${end.getUTCFullYear()}-${pad(end.getUTCMonth() + 1)}-${pad(end.getUTCDate())}`;
 
   // Ambil saldo cuti
   const { data: employee, error: empError } = await supabase
@@ -465,13 +467,15 @@ fastify.post('/leave/apply', async (request, reply) => {
   const employee_id = request.user.employee_id;
   const { leave_type, start_date, days } = request.body;
 
-  // 2. ADD DATE VALIDATION
-  const start = new Date(start_date);
+  // 2. ADD TIMEZONE-SAFE DATE VALIDATION
+  const dateParts = start_date.split('-').map(Number);
+  const start = new Date(Date.UTC(dateParts[0], dateParts[1] - 1, dateParts[2]));
+
   if (isNaN(start.getTime())) {
     return reply.code(400).send({ message: 'Invalid start_date format. Please use YYYY-MM-DD.' });
   }
 
-  const dayOfWeek = start.getDay();
+  const dayOfWeek = start.getUTCDay(); // Use getUTCDay()
   if (dayOfWeek === 0 || dayOfWeek === 6) {
     return reply.code(400).send({
       message: 'Leave start date cannot fall on a Saturday or Sunday'
@@ -479,7 +483,7 @@ fastify.post('/leave/apply', async (request, reply) => {
   }
 
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  today.setUTCHours(0, 0, 0, 0);
   if (start < today) {
     return reply.code(400).send({
       message: 'Tanggal cuti tidak boleh di masa lalu'
@@ -489,14 +493,14 @@ fastify.post('/leave/apply', async (request, reply) => {
   let workDays = 0;
   const current = new Date(start);
   while (workDays < days) {
-    const d = current.getDay();
+    const d = current.getUTCDay(); // Use getUTCDay()
     if (d !== 0 && d !== 6) workDays++;
-    if (workDays < days) current.setDate(current.getDate() + 1);
+    if (workDays < days) current.setUTCDate(current.getUTCDate() + 1); // Use setUTCDate()
   }
 
   const end = new Date(current);
   const pad = (n) => (n < 10 ? '0' + n : n);
-  const end_date = `${end.getFullYear()}-${pad(end.getMonth() + 1)}-${pad(end.getDate())}`;
+  const end_date = `${end.getUTCFullYear()}-${pad(end.getUTCMonth() + 1)}-${pad(end.getUTCDate())}`;
 
   const { data: employee, error: empError } = await supabase
     .from('employees')
@@ -546,15 +550,17 @@ fastify.post('/leave/apply', async (request, reply) => {
     return reply.code(500).send({ message: 'Gagal menyimpan cuti', detail: insertError.message });
   }
 
-  // 3. ADD DETAILED LOGGING FOR UPDATE ERRORS
-  const { error: updateError } = await supabase
+  // 3. ADD ROBUST UPDATE WITH .select() and check
+  const { data: updatedEmployee, error: updateError } = await supabase
     .from('employees')
     .update({ [balanceField]: currentBalance - days })
-    .eq('id', employee_id);
+    .eq('id', employee_id)
+    .select(); // Ensure update returns data
 
-  if (updateError) {
+  if (updateError || !updatedEmployee || updatedEmployee.length === 0) {
     console.error('Leave balance update failed:', updateError);
-    return reply.code(500).send({ message: 'Gagal memperbarui saldo cuti', detail: updateError.message });
+    // NOTE: In a real app, you might want to roll back the leave_requests insert here.
+    return reply.code(500).send({ message: 'Gagal memperbarui saldo cuti', detail: updateError?.message });
   }
 
   return reply.send({
