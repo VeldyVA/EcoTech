@@ -381,7 +381,12 @@ fastify.post('/profile', async (request, reply) => {
 
 /// POST /leave-preview 
 fastify.post('/leave-preview', async (request, reply) => {
-  const { employee_id, leave_type, start_date, days } = request.body;
+  const { leave_type, start_date, days } = request.body;
+  const employee_id = parseInt(request.body.employee_id, 10);
+
+  if (isNaN(employee_id)) {
+    return reply.code(400).send({ message: 'Invalid Employee ID.' });
+  }
 
   // TIMEZONE-SAFE DATE PARSING
   const dateParts = start_date.split('-').map(Number);
@@ -464,8 +469,12 @@ fastify.post('/leave-preview', async (request, reply) => {
 // POST leave request with auto approval
 fastify.post('/leave/apply', async (request, reply) => {
   // 1. GET EMPLOYEE ID FROM JWT - MORE SECURE
-  const employee_id = request.user.employee_id;
+  const employee_id = parseInt(request.user.employee_id, 10);
   const { leave_type, start_date, days } = request.body;
+
+  if (isNaN(employee_id)) {
+    return reply.code(400).send({ message: 'Invalid employee ID in token.' });
+  }
 
   // 2. ADD TIMEZONE-SAFE DATE VALIDATION
   const dateParts = start_date.split('-').map(Number);
