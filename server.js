@@ -461,8 +461,16 @@ fastify.post('/leave-preview', async (request, reply) => {
 
 // POST leave request with auto approval
 fastify.post('/leave/apply', async (request, reply) => {
-  const { employee_id, leave_type, start_date, days } = request.body;
-  const start = new Date(start_date); // langsung, karena sudah YYYY-MM-DD
+  // 1. GET EMPLOYEE ID FROM JWT - MORE SECURE
+  const employee_id = request.user.employee_id;
+  const { leave_type, start_date, days } = request.body;
+
+  // 2. ADD DATE VALIDATION
+  const start = new Date(start_date);
+  if (isNaN(start.getTime())) {
+    return reply.code(400).send({ message: 'Invalid start_date format. Please use YYYY-MM-DD.' });
+  }
+
   const dayOfWeek = start.getDay();
   if (dayOfWeek === 0 || dayOfWeek === 6) {
     return reply.code(400).send({
@@ -470,24 +478,18 @@ fastify.post('/leave/apply', async (request, reply) => {
     });
   }
 
-  // ❗ Validasi cuti tidak bisa backdate
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const startClone = new Date(start);
-  startClone.setHours(0, 0, 0, 0);
-
-  if (startClone < today) {
+  if (start < today) {
     return reply.code(400).send({
       message: 'Tanggal cuti tidak boleh di masa lalu'
     });
   }
   
-  // Hitung end_date berdasarkan hari kerja
   let workDays = 0;
   const current = new Date(start);
-
   while (workDays < days) {
-    const d = current.getDay(); // 0: Minggu, 6: Sabtu
+    const d = current.getDay();
     if (d !== 0 && d !== 6) workDays++;
     if (workDays < days) current.setDate(current.getDate() + 1);
   }
@@ -496,7 +498,6 @@ fastify.post('/leave/apply', async (request, reply) => {
   const pad = (n) => (n < 10 ? '0' + n : n);
   const end_date = `${end.getFullYear()}-${pad(end.getMonth() + 1)}-${pad(end.getDate())}`;
 
-  // Ambil saldo cuti
   const { data: employee, error: empError } = await supabase
     .from('employees')
     .select('annual_leave_balance, personal_leave_balance, wellbeing_day_balance')
@@ -507,7 +508,6 @@ fastify.post('/leave/apply', async (request, reply) => {
     return reply.code(404).send({ message: 'Employee not found' });
   }
 
-  // Tentukan jenis cuti dan saldo saat ini
   const type = leave_type.toLowerCase().replace(/\s+/g, '_');
   let currentBalance = 0;
   let balanceField = '';
@@ -529,7 +529,6 @@ fastify.post('/leave/apply', async (request, reply) => {
     return reply.code(400).send({ message: 'Saldo cuti tidak mencukupi' });
   }
 
-  // Insert ke leave_requests
   const { error: insertError } = await supabase.from('leave_requests').insert([
     {
       employee_id,
@@ -543,16 +542,18 @@ fastify.post('/leave/apply', async (request, reply) => {
   ]);
 
   if (insertError) {
+    console.error('Leave request insert failed:', insertError);
     return reply.code(500).send({ message: 'Gagal menyimpan cuti', detail: insertError.message });
   }
 
-  // Update saldo cuti
+  // 3. ADD DETAILED LOGGING FOR UPDATE ERRORS
   const { error: updateError } = await supabase
     .from('employees')
     .update({ [balanceField]: currentBalance - days })
     .eq('id', employee_id);
 
   if (updateError) {
+    console.error('Leave balance update failed:', updateError);
     return reply.code(500).send({ message: 'Gagal memperbarui saldo cuti', detail: updateError.message });
   }
 
