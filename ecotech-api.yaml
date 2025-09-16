@@ -157,6 +157,8 @@ paths:
   /profile/{employee_id}:
     patch:
       summary: Update employee profile by ID
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: employee_id
@@ -169,6 +171,35 @@ paths:
           application/json:
             schema:
               type: object
+              properties:
+                full_name:
+                  type: string
+                email:
+                  type: string
+                position:
+                  type: string
+                department:
+                  type: string
+                start_date:
+                  type: string
+                probation_end:
+                  type: string
+                contract_type:
+                  type: string
+                annual_leave_balance:
+                  type: integer
+                personal_leave_balance:
+                  type: integer
+                wellbeing_day_balance:
+                  type: integer
+                bank_account:
+                  type: string
+                npwp_number:
+                  type: string
+                status:
+                  type: string
+                role:
+                  type: string
       responses:
         '200':
           description: Updated employee data
@@ -211,12 +242,22 @@ paths:
   /leave/apply:
     post:
       summary: Apply for leave
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              properties:
+                leave_type:
+                  type: string
+                start_date:
+                  type: string
+                  format: date
+                days:
+                  type: integer
       responses:
         '200':
           description: Leave applied successfully
