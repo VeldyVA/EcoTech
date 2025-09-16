@@ -236,6 +236,14 @@ paths:
           application/json:
             schema:
               type: object
+              properties:
+                leave_type:
+                  type: string
+                start_date:
+                  type: string
+                  format: date
+                days:
+                  type: integer
       responses:
         '200':
           description: Leave preview result
