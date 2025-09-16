@@ -295,10 +295,12 @@ fastify.patch('/profile/:employee_id', async (request, reply) => {
     'npwp_number', 'status', 'role'
   ];
 
-  const body = request.body || {}; // 👈 fallback kalau undefined
+  const body = request.body || {};
   const updates = {};
   for (const field of allowedFields) {
-    if (field in request.body) updates[field] = request.body[field];
+    if (body && field in body) {
+      updates[field] = body[field];
+    }
   }
 
   if (request.user.role !== 'admin') {
