@@ -292,9 +292,10 @@ fastify.patch('/profile/:employee_id', async (request, reply) => {
     'start_date', 'probation_end', 'contract_type',
     'annual_leave_balance', 'personal_leave_balance',
     'wellbeing_day_balance', 'bank_account',
-    'npwp_number', 'status'
+    'npwp_number', 'status', 'role'
   ];
 
+  const body = request.body || {}; // 👈 fallback kalau undefined
   const updates = {};
   for (const field of allowedFields) {
     if (field in request.body) updates[field] = request.body[field];
