@@ -275,8 +275,20 @@ fastify.get('/admin/profile/:employee_id', async (request, reply) => {
 
 // PATCH update profile
 fastify.patch('/profile/:employee_id', async (request, reply) => {
-  const { employee_id } = request.params;
-  const updates = request.body;
+  const employee_id = parseInt(request.params.employee_id, 10);
+  // hanya ambil field yang valid
+  const allowedFields = [
+    'full_name', 'email', 'position', 'department',
+    'start_date', 'probation_end', 'contract_type',
+    'annual_leave_balance', 'personal_leave_balance',
+    'wellbeing_day_balance', 'bank_account',
+    'npwp_number', 'status'
+  ];
+
+  const updates = {};
+  for (const field of allowedFields) {
+    if (field in request.body) updates[field] = request.body[field];
+  }
 
   if (request.user.role !== 'admin') {
     return reply.code(403).send({ message: 'Only admin can edit employee data' });
@@ -359,7 +371,8 @@ fastify.post('/profile', async (request, reply) => {
     wellbeing_day_balance: newEmployee.wellbeing_day_balance,
     bank_account: newEmployee.bank_account,
     npwp_number: newEmployee.npwp_number,
-    status: newEmployee.status
+    status: newEmployee.status,
+    role: newEmployee.role
   };
 
   // Simpan data ke Supabase

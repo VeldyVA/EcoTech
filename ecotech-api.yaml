@@ -96,16 +96,48 @@ paths:
         '200':
           description: Employee data for the logged-in user
     post:
-      summary: Add new employee profile
+      summary: Add new employee
+      security: []  # kosongin biar Pusaka nggak maksa Authorization header
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-      responses:
-        '201':
-          description: New employee created
+              properties:
+                token:
+                  type: string
+                  description: JWT token (fallback jika Authorization header tidak ada)
+                full_name:
+                  type: string
+                email:
+                  type: string
+                position:
+                  type: string
+                department:
+                  type: string
+                start_date:
+                  type: string
+                  format: date
+                probation_end:
+                  type: string
+                  format: date
+                contract_type:
+                  type: string
+                annual_leave_balance:
+                  type: integer
+                personal_leave_balance:
+                  type: integer
+                wellbeing_day_balance:
+                  type: integer
+                bank_account:
+                  type: string
+                npwp_number:
+                  type: string
+                status:
+                  type: string
+                role:
+                  type: string  
   /admin/profile/{employee_id}:
     get:
       summary: ADMIN - Get employee profile by ID
